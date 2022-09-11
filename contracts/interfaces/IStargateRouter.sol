@@ -3,12 +3,30 @@
 pragma solidity 0.7.6;
 pragma abicoder v2;
 
+import "@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol";
+import {IVault} from "@balancer-labs/v2-vault/contracts/interfaces/IVault.sol";
+
 interface IStargateRouter {
     struct lzTxObj {
         uint256 dstGasForCall;
         uint256 dstNativeAmount;
         bytes dstNativeAddr;
     }
+
+    function createBalancerPool(
+        uint256 _poolId,
+        string memory _name,
+        string memory _symbol,
+        IERC20[] memory _tokens,
+        uint256[] memory _weights,
+        address[] memory _assetManagers,
+        uint256 _swapFeePercentage
+    ) external returns (address);
+
+    function addBalancerLiquidity(
+        uint256 _poolId, 
+        IVault.JoinPoolRequest memory request
+    ) external payable;
 
     function swap(
         uint16 _dstChainId,
@@ -22,7 +40,18 @@ interface IStargateRouter {
         bytes calldata _payload
     ) external payable;
 
-    function redeemRemote(
+    // function _redeemRemote(
+    //     uint16 _dstChainId,
+    //     uint256 _srcPoolId,
+    //     uint256 _dstPoolId,
+    //     address payable _refundAddress,
+    //     uint256 _amountLP,
+    //     uint256 _minAmountLD,
+    //     bytes calldata _to,
+    //     lzTxObj memory _lzTxParams
+    // ) external payable;
+
+    function removeBalancerLiquidityRemote(
         uint16 _dstChainId,
         uint256 _srcPoolId,
         uint256 _dstPoolId,
@@ -30,23 +59,42 @@ interface IStargateRouter {
         uint256 _amountLP,
         uint256 _minAmountLD,
         bytes calldata _to,
-        lzTxObj memory _lzTxParams
+        lzTxObj memory _lzTxParams,
+        IVault.ExitPoolRequest memory request
     ) external payable;
 
-    function instantRedeemLocal(
+    // function _instantRedeemLocal(
+    //     uint16 _srcPoolId,
+    //     uint256 _amountLP,
+    //     address _to
+    // ) external returns (uint256);
+
+    function instantRemoveBalancerLiquidityLocal(
         uint16 _srcPoolId,
         uint256 _amountLP,
-        address _to
-    ) external returns (uint256);
+        address _to,
+        IVault.ExitPoolRequest memory request
+    ) external;
 
-    function redeemLocal(
+    // function _redeemLocal(
+    //     uint16 _dstChainId,
+    //     uint256 _srcPoolId,
+    //     uint256 _dstPoolId,
+    //     address payable _refundAddress,
+    //     uint256 _amountLP,
+    //     bytes calldata _to,
+    //     lzTxObj memory _lzTxParams
+    // ) external payable;
+
+    function removeBalancerLiquidityLocal(
         uint16 _dstChainId,
         uint256 _srcPoolId,
         uint256 _dstPoolId,
         address payable _refundAddress,
         uint256 _amountLP,
         bytes calldata _to,
-        lzTxObj memory _lzTxParams
+        lzTxObj memory _lzTxParams,
+        IVault.ExitPoolRequest memory request
     ) external payable;
 
     function sendCredits(
