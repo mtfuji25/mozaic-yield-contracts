@@ -2,7 +2,7 @@ const { expect } = require("chai")
 const { ethers } = require("hardhat")
 const { ZERO_ADDRESS, DAI, USDC, AVAX} = require("./util/constants")
 const { deployNew, getAddr, getPoolFromFactory } = require("./util/helpers")
-const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js/src/pool-weighted/encoder");
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 // const { MONTH} = require('@balancer-labs/v2-helpers/src/time')
 const MONTH = 60 * 60 * 24 * 30;
