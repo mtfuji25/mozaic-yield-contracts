@@ -50,22 +50,22 @@ describe("Router", function () {
         )
     })
 
-    it("setBridgeAndFactory() - reverts when factory already initialized", async function () {
-        weth = await deployNew("WETH9")
-        authorizer = await deployNew("Authorizer", [owner.address])
-        vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
-        weightedPoolFactory = await deployNew("WeightedPoolFactory", [vault.address])
-        router = await deployNew("Router", [weth.address, vault.address, weightedPoolFactory.address])
-        const factoryPositionInStorage = "0x2" // position in contract storage
-        const setFactoryStorage = "0x0000000000000000000000000000000000000000000000000000000000000001" // sets the factory address to 0x1
+    // it("setBridgeAndFactory() - reverts when factory already initialized", async function () {
+    //     weth = await deployNew("WETH9")
+    //     authorizer = await deployNew("Authorizer", [owner.address])
+    //     vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
+    //     weightedPoolFactory = await deployNew("WeightedPoolFactory", [vault.address])
+    //     router = await deployNew("Router", [weth.address, vault.address, weightedPoolFactory.address])
+    //     const factoryPositionInStorage = "0x2" // position in contract storage
+    //     const setFactoryStorage = "0x0000000000000000000000000000000000000000000000000000000000000001" // sets the factory address to 0x1
 
-        // set factory to 0x1
-        await network.provider.send("hardhat_setStorageAt", [router.address, factoryPositionInStorage, setFactoryStorage])
+    //     // set factory to 0x1
+    //     await network.provider.send("hardhat_setStorageAt", [router.address, factoryPositionInStorage, setFactoryStorage])
 
-        await expect(router.setBridgeAndFactory(fakeContract.address, fakeContract.address)).to.be.revertedWith(
-            "Stargate: bridge and factory already initialized"
-        )
-    })
+    //     await expect(router.setBridgeAndFactory(fakeContract.address, fakeContract.address)).to.be.revertedWith(
+    //         "Stargate: bridge and factory already initialized"
+    //     )
+    // })
 
     it("setBridgeAndFactory() - reverts when bridge is 0x0", async function () {
         weth = await deployNew("WETH9")
@@ -85,12 +85,35 @@ describe("Router", function () {
         await expect(router.setBridgeAndFactory(fakeContract.address, ZERO_ADDRESS)).to.be.revertedWith("Stargate: factory cant be 0x0")
     })
 
-    it("addBalancerLiquidity() - reverts for non existant pool ", async function () {
-        await expect(router.addBalancerLiquidity(defaultAmountLD, poolId, owner.address)).to.be.revertedWith("Stargate: Pool does not exist")
+    ///// it("addBalancerLiquidity() - reverts for non existant pool ", async function () {
+    /////     await expect(router.addBalancerLiquidity(defaultAmountLD, poolId, owner.address)).to.be.revertedWith("Stargate: Pool does not exist")
+    ///// })
+
+    it("createBalancerPool() - reverts when swapFeePercentage is out of range", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 200)).to.be.revertedWith("BAL#203")
+    })
+
+    it("createBalancerPool() - reverts when there're less than 2 tokens", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#200")
     })
 
     it("createBalancerPool() - reverts when token is 0x0", async function () {
-        await expect(router.createBalancerPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith("Stargate: _token cannot be 0x0")
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#309")
+    })
+
+    it("createBalancerPool() - reverts when token array is unsorted", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#101")
+    })
+
+    it("createBalancerPool() - reverts with non owner", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.connect(alice).createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [40, 60], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        )
     })
 
     it("swap() - reverts when refund address is 0x0", async function () {
@@ -231,12 +254,6 @@ describe("Router", function () {
     //         "Ownable: caller is not the owner"
     //     )
     // })
-
-    it("createBalancerPool() - reverts with non owner", async function () {
-        await expect(router.connect(alice).createBalancerPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith(
-            "Ownable: caller is not the owner"
-        )
-    })
 
     it("createChainPath() - reverts with non owner", async function () {
         await expect(router.connect(alice).createChainPath(poolId, dstChainId, dstPoolId, defaultChainPathWeight)).to.be.revertedWith(
