@@ -90,8 +90,32 @@ describe("Router", function () {
         await expect(router.addBalancerLiquidity(defaultAmountLD, poolId, owner.address)).to.be.revertedWith("Stargate: Pool does not exist")
     })
 
+    // -----  create balancer pool ----- //
+    it("createBalancerPool() - reverts when swapFeePercentage is out of range", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 200)).to.be.revertedWith("BAL#203")
+    })
+
+    it("createBalancerPool() - reverts when there're less than 2 tokens", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#200")
+    })
+
     it("createBalancerPool() - reverts when token is 0x0", async function () {
-        await expect(router.createBalancerPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith("Stargate: _token cannot be 0x0")
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#309")
+    })
+
+    it("createBalancerPool() - reverts when token array is unsorted", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#101")
+    })
+
+    it("createBalancerPool() - reverts with non owner", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.connect(alice).createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [40, 60], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith(
+            "Ownable: caller is not the owner"
+        )
     })
 
     it("swap() - reverts when refund address is 0x0", async function () {
