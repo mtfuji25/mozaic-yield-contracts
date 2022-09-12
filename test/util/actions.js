@@ -253,8 +253,22 @@ callRedeemInstant = async (poolObj, user, amountLP, amountSD) => {
         redeemLP = amountLP.gt(capAmountLP) ? capAmountLP : amountLP
         redeemSD = redeemLP.mul(totalLiquidity).div(totalSupply)
     }
-    await expect(poolObj.router.connect(user).instantRedeemLocal(poolObj.id, amountLP, user.address))
-        .to.emit(poolObj.pool, "InstantRedeemLocal")
+
+
+    const request = {
+        assets: [USDC, AVAX],
+        minAmountsOut: [0, 0],
+        userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+          await poolObj.balanceOf(user.address)
+        ),
+        toInternalBalance: false,
+    }
+    await expect(poolObj.router.connect(user).instantRemoveBalancerLiquidityLocal(
+      poolObj.id,
+      amountLP,
+      user.address,
+      request
+    )).to.emit(poolObj.pool, "InstantRedeemLocal")
         .withArgs(user.address, redeemLP, redeemSD, user.address)
 
     // return the actual amount got redeemed

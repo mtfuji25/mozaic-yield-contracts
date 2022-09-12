@@ -670,7 +670,21 @@ describe("Pool State: ", function () {
     })
 
     it("instantRedeemLocal() - reverts when totalLiquidity is 0", async function () {
-        await expect(avax_dai_pool.router.connect(alice).instantRedeemLocal(avax_dai_pool.id, 1, ZERO_ADDRESS)).to.revertedWith(
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await avax_dai_pool.balanceOf(alice)
+            ),
+            toInternalBalance: false,
+        }
+        
+        await expect(avax_dai_pool.connect(alice).instantRemoveBalancerLiquidityLocal(
+          avax_dai_pool.id,
+          1,
+          ZERO_ADDRESS,
+          request
+        )).to.revertedWith(
             "Stargate: cant convert SDtoLP when totalLiq == 0'"
         )
     })

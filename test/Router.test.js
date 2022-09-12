@@ -172,7 +172,22 @@ describe("Router", function () {
     })
 
     it("instantRedeemLocal() - reverts with 0 lp", async function () {
-        await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
+        const poolContract = await router.factory().then(f => f.getPool(poolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(alice)
+            ),
+            toInternalBalance: false,
+        }
+
+        await expect(router.instantRemoveBalancerLiquidityLocal(
+          poolId,
+          0,
+          ZERO_ADDRESS,
+          request
+        )).to.revertedWith("Stargate: not enough lp to redeem")
     })
 
     it("redeemLocal() - reverts when refund address is 0x0", async function () {
