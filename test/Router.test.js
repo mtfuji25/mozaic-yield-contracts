@@ -177,7 +177,7 @@ describe("Router", function () {
             assets: [USDC, AVAX],
             minAmountsOut: [0, 0],
             userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-              await poolContract.balanceOf(alice)
+              await poolContract.balanceOf(alice.address)
             ),
             toInternalBalance: false,
         }
@@ -191,8 +191,30 @@ describe("Router", function () {
     })
 
     it("redeemLocal() - reverts when refund address is 0x0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(ZERO_ADDRESS)
+            ),
+            toInternalBalance: false,
+        }
         await expect(
-            router.redeemLocal(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, "0x", { dstGasForCall: 0, dstNativeAmount: 0, dstNativeAddr: "0x" })
+            router.removeBalancerLiquidityLocal(
+              chainId,
+              poolId,
+              dstPoolId,
+              ZERO_ADDRESS,
+              1,
+              "0x",
+              {
+                  dstGasForCall: 0,
+                  dstNativeAmount: 0,
+                  dstNativeAddr: "0x"
+              },
+              request
+          )
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
