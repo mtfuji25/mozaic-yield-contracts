@@ -1,7 +1,8 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
-const { ZERO_ADDRESS } = require("./util/constants")
+const { ZERO_ADDRESS, DAI, USDC, AVAX} = require("./util/constants")
 const { deployNew, getAddr, getPoolFromFactory } = require("./util/helpers")
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 // const { MONTH} = require('@balancer-labs/v2-helpers/src/time')
 const MONTH = 60 * 60 * 24 * 30;
@@ -35,7 +36,7 @@ describe("Router", function () {
 
     beforeEach(async function () {
         lzEndpoint = await deployNew("LZEndpointMock", [chainId])
-        
+
         weth = await deployNew("WETH9")
         authorizer = await deployNew("Authorizer", [owner.address])
         vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
@@ -167,32 +168,110 @@ describe("Router", function () {
     })
 
     it("redeemRemote() - reverts when refund address is 0x0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(ZERO_ADDRESS)
+            ),
+            toInternalBalance: false,
+        }
+
+
         await expect(
-            router.redeemRemote(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, 0, "0x", {
+            router.removeBalancerLiquidityRemote(
+              chainId,
+              poolId,
+              dstPoolId,
+              ZERO_ADDRESS,
+              1,
+              0,
+              "0x",
+              {
                 dstGasForCall: 0,
                 dstNativeAmount: 0,
                 dstNativeAddr: "0x",
-            })
+              },
+              request
+            )
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
     it("redeemRemote() - reverts when amount LP is 0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(fakeContract.address)
+            ),
+            toInternalBalance: false,
+        }
+
         await expect(
-            router.redeemRemote(chainId, poolId, dstPoolId, fakeContract.address, 0, 0, "0x", {
+            router.removeBalancerLiquidityRemote(
+              chainId,
+              poolId,
+              dstPoolId,
+              fakeContract.address,
+              0,
+              0,
+              "0x",
+              {
                 dstGasForCall: 0,
                 dstNativeAmount: 0,
                 dstNativeAddr: "0x",
-            })
+              },
+              request
+            )
         ).to.be.revertedWith("Stargate: not enough lp to redeemRemote")
     })
 
     it("instantRedeemLocal() - reverts with 0 lp", async function () {
-        await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
+        const poolContract = await router.factory().then(f => f.getPool(poolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(alice.address)
+            ),
+            toInternalBalance: false,
+        }
+
+        await expect(router.instantRemoveBalancerLiquidityLocal(
+          poolId,
+          0,
+          ZERO_ADDRESS,
+          request
+        )).to.revertedWith("Stargate: not enough lp to redeem")
     })
 
     it("redeemLocal() - reverts when refund address is 0x0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await poolContract.balanceOf(ZERO_ADDRESS)
+            ),
+            toInternalBalance: false,
+        }
         await expect(
-            router.redeemLocal(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, "0x", { dstGasForCall: 0, dstNativeAmount: 0, dstNativeAddr: "0x" })
+            router.removeBalancerLiquidityLocal(
+              chainId,
+              poolId,
+              dstPoolId,
+              ZERO_ADDRESS,
+              1,
+              "0x",
+              {
+                  dstGasForCall: 0,
+                  dstNativeAmount: 0,
+                  dstNativeAddr: "0x"
+              },
+              request
+          )
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
