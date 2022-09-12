@@ -30,20 +30,32 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@balancer-labs/v2-asset-manager-utils@https://github.com/Mozaic-fi/balancer-asset-manager-utils":
-  version "0.2.0"
-  resolved "https://github.com/Mozaic-fi/balancer-asset-manager-utils#f6609a063aa3a211a8f7996910a301d9d2608401"
-  dependencies:
-    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
-
-"@balancer-labs/v2-deployments@https://github.com/Mozaic-fi/balancer-deployments":
-  version "2.3.0"
-  resolved "https://github.com/Mozaic-fi/balancer-deployments#cafc8483616ca96324a6d5e5ba08d631fca8eefb"
-
-"@balancer-labs/v2-helpers@https://github.com/Mozaic-fi/balancer-helpers":
+"@balancer-labs/balancer-js@file:../dependencies/balancer-js":
   version "1.0.0"
-  resolved "https://github.com/Mozaic-fi/balancer-helpers#4d30f4805a3939c5da1ddc60a9ca22891364e21f"
+  dependencies:
+    "@balancer-labs/typechain" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-balancer-js-1.0.0-00a58bb9-c41e-45c1-8f3e-6b0d42202159-1662973268949/node_modules/@balancer-labs/balancer-typechain"
+    "@ethersproject/abi" "^5.4.0"
+    "@ethersproject/abstract-signer" "^5.4.0"
+    "@ethersproject/address" "^5.4.0"
+    "@ethersproject/bignumber" "^5.4.0"
+    "@ethersproject/bytes" "^5.4.0"
+    "@ethersproject/constants" "^5.4.0"
+    "@ethersproject/contracts" "^5.4.0"
+
+"@balancer-labs/typechain@file:../dependencies/balancer-typechain":
+  version "1.0.0"
+
+"@balancer-labs/v2-asset-manager-utils@file:../dependencies/balancer-asset-manager-utils":
+  version "0.2.0"
+  dependencies:
+    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-asset-manager-utils-0.2.0-3ebd9cb7-4178-49d4-bf9c-f91fcc6abe03-1662973268945/node_modules/@balancer-labs/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-asset-manager-utils-0.2.0-3ebd9cb7-4178-49d4-bf9c-f91fcc6abe03-1662973268945/node_modules/@balancer-labs/balancer-vault"
+
+"@balancer-labs/v2-deployments@file:../dependencies/balancer-deployments":
+  version "2.3.0"
+
+"@balancer-labs/v2-helpers@file:../dependencies/balancer-helpers":
+  version "1.0.0"
   dependencies:
     "@nomiclabs/hardhat-ethers" "^2.0.1"
     "@types/lodash" "^4.14.161"
@@ -56,31 +68,27 @@
     ts-node "^8.10.2"
     typescript "^4.0.2"
 
-"@balancer-labs/v2-pool-utils@https://github.com/Mozaic-fi/balancer-pool-utils":
+"@balancer-labs/v2-pool-utils@file:../dependencies/balancer-pool-utils":
   version "2.0.1"
-  resolved "https://github.com/Mozaic-fi/balancer-pool-utils#ce9db16430df1086a62ba75c821a40327aa509b9"
   dependencies:
-    "@balancer-labs/v2-asset-manager-utils" "https://github.com/Mozaic-fi/balancer-asset-manager-utils"
-    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
+    "@balancer-labs/v2-asset-manager-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-asset-manager-utils"
+    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-vault"
 
-"@balancer-labs/v2-pool-weighted@https://github.com/Mozaic-fi/balancer-pool-weighted":
+"@balancer-labs/v2-pool-weighted@file:../dependencies/balancer-pool-weighted":
   version "2.0.1"
-  resolved "https://github.com/Mozaic-fi/balancer-pool-weighted#ade5db1064750b1439dc87dcc9527cf844859621"
   dependencies:
-    "@balancer-labs/v2-pool-utils" "https://github.com/Mozaic-fi/balancer-pool-utils"
-    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
+    "@balancer-labs/v2-pool-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-pool-utils"
+    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-vault"
 
-"@balancer-labs/v2-solidity-utils@https://github.com/Mozaic-fi/balancer-solidity-utils":
+"@balancer-labs/v2-solidity-utils@file:../dependencies/balancer-solidity-utils":
   version "2.0.0"
-  resolved "https://github.com/Mozaic-fi/balancer-solidity-utils#f8f29824ee6d0be484c2353e0bfaf6e5c769b0d7"
 
-"@balancer-labs/v2-vault@https://github.com/Mozaic-fi/balancer-vault":
+"@balancer-labs/v2-vault@file:../dependencies/balancer-vault":
   version "2.0.0"
-  resolved "https://github.com/Mozaic-fi/balancer-vault#fc7f6256369afc014f5f96a645eac6c91b0951a0"
   dependencies:
-    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
+    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-vault-2.0.0-e964db06-34f4-4ecf-a97c-c21bca73aa10-1662973268943/node_modules/@balancer-labs/balancer-solidity-utils"
 
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
@@ -390,7 +398,7 @@
     "@ethersproject/logger" "^5.5.0"
     "@ethersproject/properties" "^5.5.0"
 
-"@ethersproject/abstract-signer@5.7.0", "@ethersproject/abstract-signer@^5.7.0":
+"@ethersproject/abstract-signer@5.7.0", "@ethersproject/abstract-signer@^5.4.0", "@ethersproject/abstract-signer@^5.7.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/abstract-signer/-/abstract-signer-5.7.0.tgz#13f4f32117868452191a4649723cb086d2b596b2"
   integrity sha512-a16V8bq1/Cz+TGCkE2OPMTOUDLS3grCpdjoJCYNnVBbdYEMSgKrU0+B90s8b6H+ByYTBZN7a3g76jdIJi7UfKQ==
@@ -462,7 +470,7 @@
     "@ethersproject/logger" "^5.5.0"
     bn.js "^4.11.9"
 
-"@ethersproject/bignumber@5.7.0", "@ethersproject/bignumber@^5.7.0":
+"@ethersproject/bignumber@5.7.0", "@ethersproject/bignumber@^5.4.0", "@ethersproject/bignumber@^5.7.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/bignumber/-/bignumber-5.7.0.tgz#e2f03837f268ba655ffba03a57853e18a18dc9c2"
   integrity sha512-n1CAdIHRWjSucQO3MC1zPSVgV/6dy/fjL9pMrPP9peL+QxEg9wOsVqwD4+818B6LUEtaXzVHQiuivzRoxPxUGw==
@@ -515,7 +523,7 @@
     "@ethersproject/properties" "^5.5.0"
     "@ethersproject/transactions" "^5.5.0"
 
-"@ethersproject/contracts@5.7.0":
+"@ethersproject/contracts@5.7.0", "@ethersproject/contracts@^5.4.0":
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/@ethersproject/contracts/-/contracts-5.7.0.tgz#c305e775abd07e48aa590e1a877ed5c316f8bd1e"
   integrity sha512-5GJbzEU3X+d33CdfPhcyS+z8MzsTrBGk/sc+G+59+tPa9yFkl6HQ9D6L0QMgNTA9q8dT0XKxxkyp883XsQvbbg==

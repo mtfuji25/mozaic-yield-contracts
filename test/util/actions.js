@@ -11,6 +11,8 @@ const { getPoolState, getChainPaths } = require("./poolStateHelpers")
 const { ethers } = require("hardhat")
 const { expect } = require("chai")
 const { BigNumber } = require("ethers")
+const {USDC, AVAX} = require("./constants");
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 const verbose = false
 
@@ -286,10 +288,27 @@ callRevertRedeemLocal = async (srcPoolObj, dstPoolObj, user, lzTxParams) => {
 }
 
 callRedeemRemote = async (srcPoolObj, dstPoolObj, user, amount, srcAmountToReceive, lzTxParams) => {
+    const request = {
+        assets: [USDC, AVAX],
+        minAmountsOut: [0, 0],
+        userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+          await dstPoolObj.balanceOf(user.address)
+        ),
+        toInternalBalance: false,
+    }
+
     await expect(
-        srcPoolObj.router
-            .connect(user)
-            .redeemRemote(dstPoolObj.chainId, srcPoolObj.id, dstPoolObj.id, user.address, amount, 1, user.address, lzTxParams)
+        srcPoolObj.router.connect(user).removeBalancerLiquidityRemote(
+          dstPoolObj.chainId,
+          srcPoolObj.id,
+          dstPoolObj.id,
+          user.address,
+          amount,
+          1,
+          user.address,
+          lzTxParams,
+          request
+        )
     ).to.emit(srcPoolObj.pool, "Swap")
 }
 

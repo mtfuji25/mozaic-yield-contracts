@@ -24,6 +24,7 @@ const {
 } = require("./util/constants")
 const { addBalancerLiquidity, equalize, mintAndSwap, removeLiquidityLocal, removeLiquidityRemote, removeLiquidityInstant } = require("./util/actions")
 const { audit, getPoolState } = require("./util/poolStateHelpers")
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 describe("Pool State: ", function () {
     this.timeout(600000000)
@@ -322,12 +323,37 @@ describe("Pool State: ", function () {
         it("redeemRemote() - nativeGasParams blocks", async function () {
             const nativeAmt = 453
             const encodedDstNativeAddr = encodePackedParams(["address"], [alice.address])
-            const lzTxParams = { dstGasForCall: 0, dstNativeAmount: nativeAmt, dstNativeAddr: encodedDstNativeAddr }
+            const lzTxParams = {
+                dstGasForCall: 0,
+                dstNativeAmount: nativeAmt,
+                dstNativeAddr: encodedDstNativeAddr
+            }
+
             const dstChainId = eth_endpoint.chainId
 
+            const router = avax_endpoint.router
+            const poolContract = await router.factory().then(f => f.getPool(DAI))
+            const request = {
+                assets: [USDC, AVAX],
+                minAmountsOut: [0, 0],
+                userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                  await poolContract.balanceOf(bob.address)
+                ),
+                toInternalBalance: false,
+            }
             // remove gas object so it gets stored properly, Passing ZERO_ADDRESS causes it to revert
             await expect(
-                avax_endpoint.router.connect(bob).redeemRemote(dstChainId, DAI, DAI, bob.address, 1000, 1, ZERO_ADDRESS, lzTxParams)
+              router.connect(bob).removeBalancerLiquidityRemote(
+                  dstChainId,
+                  DAI,
+                  DAI,
+                  bob.address,
+                  1000,
+                  1,
+                  ZERO_ADDRESS,
+                  lzTxParams,
+                  request,
+                )
             ).to.be.revertedWith("NativeGasParams check")
         })
 
