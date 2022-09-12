@@ -6,6 +6,15 @@ const { deployNew, getAddr, getPoolFromFactory } = require("./util/helpers")
 // const { MONTH} = require('@balancer-labs/v2-helpers/src/time')
 const MONTH = 60 * 60 * 24 * 30;
 
+const sortArr = (addr1, addr2) => {
+    return addr1 > addr2 ? [addr2, addr1] : [addr1, addr2];
+}
+
+const percentArr = [
+    ethers.utils.parseEther("0.5"),
+    ethers.utils.parseEther("0.5")
+]
+
 describe("Router", function () {
     let owner, alice, badUser1, fakeContract, lzEndpoint, factory, router, bridge, weth, authorizer, vault, weightedPoolFactory
     let chainId, poolId, decimals, dstPoolId, dstChainId, defaultChainPathWeight
@@ -86,11 +95,59 @@ describe("Router", function () {
     })
 
     it("addBalancerLiquidity() - reverts for non existant pool ", async function () {
-        await expect(router.addBalancerLiquidity(defaultAmountLD, poolId, owner.address)).to.be.revertedWith("Stargate: Pool does not exist")
+        // error code 200 is 'INVALID_POOL_ID'
+        await expect(
+            router.addBalancerLiquidity(
+                defaultAmountLD, 
+                {
+                    assets: [],
+                    maxAmountsIn: [],
+                    userData: "0x",
+                    fromInternalBalance: false
+                }
+            )
+        ).to.be.revertedWith("BAL#500")
+    })
+
+    it("createBalancerPool() - pool length should bigger than 1", async function () {
+        // https://dev.balancer.fi/references/error-codes
+        // error code 200 is 'All pools must contain at least two tokens'
+        await expect(
+            router.createBalancerPool(
+                poolId, 
+                "x", 
+                "x*",
+                [ZERO_ADDRESS],
+                [ethers.utils.parseEther("1")],
+                [ZERO_ADDRESS],
+                ethers.utils.parseEther("0.001")
+            )
+        ).to.be.revertedWith("BAL#200")
     })
 
     it("createBalancerPool() - reverts when token is 0x0", async function () {
-        await expect(router.createBalancerPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith("Stargate: _token cannot be 0x0")
+        // https://dev.balancer.fi/references/error-codes
+        // error code 309 is 'INVALID_TOKEN'
+        await expect(
+            router.createBalancerPool(
+                poolId, 
+                "x", 
+                "x*",
+                [
+                    ZERO_ADDRESS, 
+                    fakeContract.address
+                ],
+                [
+                    ethers.utils.parseEther("0.5"),
+                    ethers.utils.parseEther("0.5")
+                ],
+                [
+                    ZERO_ADDRESS, 
+                    fakeContract.address
+                ],
+                ethers.utils.parseEther("0.001")
+            )
+        ).to.be.revertedWith("BAL#309")
     })
 
     it("swap() - reverts when refund address is 0x0", async function () {
@@ -193,23 +250,37 @@ describe("Router", function () {
         ).to.be.revertedWith("Bridge: caller must be Bridge.")
     })
 
-    // it("redeemLocalCallback() - emits event", async function () {
-    //     await router.createPool(dstPoolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await expect(
-    //         callAsContract(router, bridge.address, "redeemLocalCallback(uint16,bytes,uint256,uint256,uint256,address,uint256,uint256)", [
-    //             chainId,
-    //             alice.address,
-    //             nonce,
-    //             poolId,
-    //             dstPoolId,
-    //             alice.address,
-    //             defaultAmountSD,
-    //             defaultAmountSD,
-    //         ])
-    //     )
-    //         .to.emit(router, "RedeemLocalCallback")
-    //         .withArgs(chainId, alice.address, nonce, poolId, dstPoolId, alice.address, defaultAmountSD, defaultAmountSD)
-    // })
+    it("redeemLocalCallback() - emits event", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            dstPoolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await expect(
+            callAsContract(router, bridge.address, "redeemLocalCallback(uint16,bytes,uint256,uint256,uint256,address,uint256,uint256)", [
+                chainId,
+                alice.address,
+                nonce,
+                poolId,
+                dstPoolId,
+                alice.address,
+                defaultAmountSD,
+                defaultAmountSD,
+            ])
+        )
+            .to.emit(router, "RedeemLocalCallback")
+            .withArgs(chainId, alice.address, nonce, poolId, dstPoolId, alice.address, defaultAmountSD, defaultAmountSD)
+    })
 
     it("swapRemote() - reverts when caller is no Bridge", async function () {
         const swapObj = {
@@ -226,16 +297,29 @@ describe("Router", function () {
         ).to.be.revertedWith("Bridge: caller must be Bridge.")
     })
 
-    // it("createPool() - reverts with non owner", async function () {
-    //     await expect(router.connect(alice).createPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith(
-    //         "Ownable: caller is not the owner"
-    //     )
-    // })
-
     it("createBalancerPool() - reverts with non owner", async function () {
-        await expect(router.connect(alice).createBalancerPool(poolId, ZERO_ADDRESS, decimals, decimals, "x", "x*")).to.be.revertedWith(
-            "Ownable: caller is not the owner"
-        )
+        await expect(
+            router
+            .connect(alice)
+            .createBalancerPool(
+                poolId, 
+                "x", 
+                "x*",
+                [
+                    ZERO_ADDRESS, 
+                    fakeContract.address
+                ],
+                [
+                    ethers.utils.parseEther("0.5"),
+                    ethers.utils.parseEther("0.5")
+                ],
+                [
+                    ZERO_ADDRESS, 
+                    fakeContract.address
+                ],
+                ethers.utils.parseEther("0.001")
+            )
+        ).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
     it("createChainPath() - reverts with non owner", async function () {
@@ -250,15 +334,29 @@ describe("Router", function () {
         )
     })
 
-    // it("setWeightForChainPath()", async function () {
-    //     await router.createPool(poolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await router.createChainPath(poolId, dstChainId, dstPoolId, defaultChainPathWeight)
-    //     await router.activateChainPath(poolId, dstChainId, dstPoolId)
-    //     const pool = await getPoolFromFactory(factory, poolId)
-    //     expect((await pool.getChainPath(dstChainId, dstPoolId)).weight).to.equal(defaultChainPathWeight)
-    //     await router.setWeightForChainPath(poolId, dstChainId, dstPoolId, defaultChainPathWeight + 1)
-    //     expect((await pool.getChainPath(dstChainId, dstPoolId)).weight).to.equal(defaultChainPathWeight + 1)
-    // })
+    it("setWeightForChainPath()", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            poolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await router.createChainPath(poolId, dstChainId, dstPoolId, defaultChainPathWeight)
+        await router.activateChainPath(poolId, dstChainId, dstPoolId)
+        const pool = await getPoolFromFactory(factory, poolId)
+        expect((await pool.getChainPath(dstChainId, dstPoolId)).weight).to.equal(defaultChainPathWeight)
+        await router.setWeightForChainPath(poolId, dstChainId, dstPoolId, defaultChainPathWeight + 1)
+        expect((await pool.getChainPath(dstChainId, dstPoolId)).weight).to.equal(defaultChainPathWeight + 1)
+    })
 
     it("setProtocolFeeOwner() - reverts when caller is not the dao", async function () {
         await expect(router.connect(alice).setProtocolFeeOwner(alice.address)).to.be.revertedWith("Ownable: caller is not the owner")
@@ -289,38 +387,108 @@ describe("Router", function () {
         await expect(router.connect(alice).setSwapStop(poolId, true)).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
-    // it("setFeeLibrary() - when caller is Owner", async function () {
-    //     await router.createPool(poolId, alice.address, decimals, decimals, "x", "x*")
-    //     await router.setFeeLibrary(poolId, alice.address)
-    // })
+    it("setFeeLibrary() - when caller is Owner", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
 
-    // it("setSwapStop() - when caller is the Owner", async function () {
-    //     await router.createPool(poolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await router.setSwapStop(poolId, true)
-    // })
+        await router.createBalancerPool(
+            poolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
 
-    // it("callDelta() - anyone can call", async function () {
-    //     await router.createPool(poolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await router.connect(alice).callDelta(poolId, true)
-    // })
+        await router.setFeeLibrary(poolId, alice.address)
+    })
+
+    it("setSwapStop() - when caller is the Owner", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            poolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await router.setSwapStop(poolId, true)
+    })
+
+    it("callDelta() - anyone can call", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            poolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await router.connect(alice).callDelta(poolId, true)
+    })
 
     it("withdrawMintFee() - reverts when non owner", async function () {
         await expect(router.connect(alice).withdrawMintFee(poolId, alice.address)).to.be.revertedWith("Stargate: only mintFeeOwner")
     })
 
-    // it("withdrawMintFee()", async function () {
-    //     await router.createPool(poolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await router.setMintFeeOwner(owner.address)
-    //     await expect(router.withdrawMintFee(poolId, alice.address)).to.not.be.revertedWith("Stargate: only mintFeeOwner")
-    // })
+    it("withdrawMintFee()", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            dstPoolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await router.setMintFeeOwner(owner.address)
+        await expect(router.withdrawMintFee(poolId, alice.address)).to.not.be.revertedWith("Stargate: only mintFeeOwner")
+    })
 
     it("withdrawProtocolFee() - reverts when non owner", async function () {
         await expect(router.connect(alice).withdrawProtocolFee(poolId, alice.address)).to.be.revertedWith("Stargate: only protocolFeeOwner")
     })
 
-    // it("withdrawProtocolFee() - reverts when non owner", async function () {
-    //     await router.createPool(poolId, fakeContract.address, decimals, decimals, "x", "x*")
-    //     await router.setProtocolFeeOwner(owner.address)
-    //     await expect(router.withdrawProtocolFee(poolId, alice.address)).to.not.be.revertedWith("Stargate: only protocolFeeOwner")
-    // })
+    it("withdrawProtocolFee() - reverts when non owner", async function () {
+        weth = await deployNew("WETH9")
+        let MockToken = await ethers.getContractFactory("MockToken")
+        let mockToken = await MockToken.deploy("Mock", "MCK", 18);
+        const arr = sortArr(weth.address, mockToken.address)
+
+        await router.createBalancerPool(
+            dstPoolId, 
+            "x", 
+            "x*",
+            arr,
+            percentArr,
+            arr,
+            ethers.utils.parseEther("0.001")
+        );
+
+        await router.setProtocolFeeOwner(owner.address)
+        await expect(router.withdrawProtocolFee(poolId, alice.address)).to.not.be.revertedWith("Stargate: only protocolFeeOwner")
+    })
 })

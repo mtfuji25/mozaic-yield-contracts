@@ -47,12 +47,14 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
 
     //---------------------------------------------------------------------------
     // VARIABLES
-    IVault public balancerVault;
-    address public balancerWeightedPoolFactory;
     Factory public factory; // used for creating pools
-    address public protocolFeeOwner; // can call methods to pull Stargate fees collected in pools
-    address public mintFeeOwner; // can call methods to pull mint fees collected in pools
     Bridge public bridge;
+    IVault public balancerVault;
+
+    address public mintFeeOwner; // can call methods to pull mint fees collected in pools
+    address public protocolFeeOwner; // can call methods to pull Stargate fees collected in pools
+    address public balancerWeightedPoolFactory;
+
     mapping(uint16 => mapping(bytes => mapping(uint256 => bytes))) public revertLookup; //[chainId][srcAddress][nonce]
     mapping(uint16 => mapping(bytes => mapping(uint256 => CachedSwap))) public cachedSwapLookup; //[chainId][srcAddress][nonce]
     mapping(uint256 => bytes32) public balancerAndStargatePoolLookup; // [stargatePoolId]
