@@ -11,6 +11,8 @@ const { getPoolState, getChainPaths } = require("./poolStateHelpers")
 const { ethers } = require("hardhat")
 const { expect } = require("chai")
 const { BigNumber } = require("ethers")
+const {USDC, AVAX} = require("./constants");
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 const verbose = false
 
@@ -251,8 +253,22 @@ callRedeemInstant = async (poolObj, user, amountLP, amountSD) => {
         redeemLP = amountLP.gt(capAmountLP) ? capAmountLP : amountLP
         redeemSD = redeemLP.mul(totalLiquidity).div(totalSupply)
     }
-    await expect(poolObj.router.connect(user).instantRedeemLocal(poolObj.id, amountLP, user.address))
-        .to.emit(poolObj.pool, "InstantRedeemLocal")
+
+
+    const request = {
+        assets: [USDC, AVAX],
+        minAmountsOut: [0, 0],
+        userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+          await poolObj.balanceOf(user.address)
+        ),
+        toInternalBalance: false,
+    }
+    await expect(poolObj.router.connect(user).instantRemoveBalancerLiquidityLocal(
+      poolObj.id,
+      amountLP,
+      user.address,
+      request
+    )).to.emit(poolObj.pool, "InstantRedeemLocal")
         .withArgs(user.address, redeemLP, redeemSD, user.address)
 
     // return the actual amount got redeemed
@@ -260,12 +276,28 @@ callRedeemInstant = async (poolObj, user, amountLP, amountSD) => {
 }
 
 callRedeemLocal = async (srcPoolObj, dstPoolObj, user, amount, lzTxParams) => {
+    const request = {
+        assets: [USDC, AVAX],
+        minAmountsOut: [0, 0],
+        userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+          await dstPoolObj.balanceOf(user.address)
+        ),
+        toInternalBalance: false,
+    }
+
     // due to async race conditions, when figuring out the nonce to pass to revertRedeemLocal,
     // should always query it via the event thats emitted on redeemLocal via the bridge contract
     await expect(
-        srcPoolObj.router
-            .connect(user)
-            .redeemLocal(dstPoolObj.chainId, srcPoolObj.id, dstPoolObj.id, user.address, amount, user.address, lzTxParams)
+        srcPoolObj.router.connect(user).removeBalancerLiquidityLocal(
+          dstPoolObj.chainId,
+          srcPoolObj.id,
+          dstPoolObj.id,
+          user.address,
+          amount,
+          user.address,
+          lzTxParams,
+          request
+        )
     ).to.emit(dstPoolObj.router, "RevertRedeemLocal")
     // .withArgs(srcPoolObj.chainId, srcPoolObj.id, dstPoolObj.id, user.address.toLowerCase(), redeemAmount, mintBackAmount)
 
@@ -286,10 +318,27 @@ callRevertRedeemLocal = async (srcPoolObj, dstPoolObj, user, lzTxParams) => {
 }
 
 callRedeemRemote = async (srcPoolObj, dstPoolObj, user, amount, srcAmountToReceive, lzTxParams) => {
+    const request = {
+        assets: [USDC, AVAX],
+        minAmountsOut: [0, 0],
+        userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+          await dstPoolObj.balanceOf(user.address)
+        ),
+        toInternalBalance: false,
+    }
+
     await expect(
-        srcPoolObj.router
-            .connect(user)
-            .redeemRemote(dstPoolObj.chainId, srcPoolObj.id, dstPoolObj.id, user.address, amount, 1, user.address, lzTxParams)
+        srcPoolObj.router.connect(user).removeBalancerLiquidityRemote(
+          dstPoolObj.chainId,
+          srcPoolObj.id,
+          dstPoolObj.id,
+          user.address,
+          amount,
+          1,
+          user.address,
+          lzTxParams,
+          request
+        )
     ).to.emit(srcPoolObj.pool, "Swap")
 }
 

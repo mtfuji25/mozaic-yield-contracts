@@ -13,7 +13,6 @@ import "./Pool.sol";
 import "./Bridge.sol";
 
 // interfaces
-import "@balancer-labs/v2-solidity-utils/contracts/openzeppelin/IERC20.sol";
 import {IAsset} from "@balancer-labs/v2-vault/contracts/interfaces/IAsset.sol";
 import {IBaseWeightedPool} from "@balancer-labs/v2-pool-weighted/contracts/BaseWeightedPool.sol";
 import {IPoolBalances} from "@balancer-labs/v2-vault/contracts/PoolBalances.sol";
@@ -192,7 +191,10 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         amountLD = IBaseWeightedPool(balancerPool).calculateExactTokensInForBPTOut(balances, normalizedWeights, scalingFactors, change.userData);
     }
 
-    function addBalancerLiquidity(uint256 _poolId, IVault.JoinPoolRequest memory request) external payable onlyOwner nonReentrant {
+    function addBalancerLiquidity(
+        uint256 _poolId, 
+        IVault.JoinPoolRequest memory request
+    ) external payable override nonReentrant {
         bytes32 balancerPoolId = balancerAndStargatePoolLookup[_poolId];
         balancerVault.joinPool(balancerPoolId, msg.sender, owner(), request);
         uint256 amountLD = _calculateAmountLD(balancerPoolId, msg.sender, owner(), request);
@@ -228,7 +230,33 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         bridge.swap{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, s, _lzTxParams, _to, _payload);
     }
 
-    function redeemRemote(
+    // function _redeemRemote(
+    //     uint16 _dstChainId,
+    //     uint256 _srcPoolId,
+    //     uint256 _dstPoolId,
+    //     address payable _refundAddress,
+    //     uint256 _amountLP,
+    //     uint256 _minAmountLD,
+    //     bytes calldata _to,
+    //     lzTxObj memory _lzTxParams
+    // ) external payable override nonReentrant {
+    //     require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
+    //     require(_amountLP > 0, "Stargate: not enough lp to redeemRemote");
+    //     Pool.SwapObj memory s;
+    //     Pool.CreditObj memory c;
+    //     {
+    //         Pool pool = _getPool(_srcPoolId);
+    //         uint256 amountLD = pool.amountLPtoLD(_amountLP);
+    //         // perform a swap with no liquidity
+    //         s = pool.swap(_dstChainId, _dstPoolId, msg.sender, amountLD, _minAmountLD, false);
+    //         pool.redeemRemote(_dstChainId, _dstPoolId, msg.sender, _amountLP);
+    //         c = pool.sendCredits(_dstChainId, _dstPoolId);
+    //     }
+    //     // equal to a swap, with no payload ("0x") no dstGasForCall 0
+    //     bridge.swap{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, s, _lzTxParams, _to, "");
+    // }
+
+    function removeBalancerLiquidityRemote(
         uint16 _dstChainId,
         uint256 _srcPoolId,
         uint256 _dstPoolId,
@@ -236,8 +264,12 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         uint256 _amountLP,
         uint256 _minAmountLD,
         bytes calldata _to,
-        lzTxObj memory _lzTxParams
+        lzTxObj memory _lzTxParams, 
+        IVault.ExitPoolRequest memory request
     ) external payable override nonReentrant {
+        // bytes32 balancerPoolId = balancerAndStargatePoolLookup[_dstPoolId];
+        // balancerVault.exitPool(balancerPoolId, address(this), payable(owner()), request);
+
         require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
         require(_amountLP > 0, "Stargate: not enough lp to redeemRemote");
         Pool.SwapObj memory s;
@@ -251,28 +283,62 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
             c = pool.sendCredits(_dstChainId, _dstPoolId);
         }
         // equal to a swap, with no payload ("0x") no dstGasForCall 0
-        bridge.swap{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, s, _lzTxParams, _to, "");
+        // bridge.swap{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, s, _lzTxParams, _to, "");
     }
 
-    function instantRedeemLocal(
+    function _instantRedeemLocal(
         uint16 _srcPoolId,
         uint256 _amountLP,
         address _to
-    ) external override nonReentrant returns (uint256 amountSD) {
+    ) internal returns (uint256 amountSD) {
         require(_amountLP > 0, "Stargate: not enough lp to redeem");
         Pool pool = _getPool(_srcPoolId);
         amountSD = pool.instantRedeemLocal(msg.sender, _amountLP, _to);
     }
 
-    function redeemLocal(
+    function instantRemoveBalancerLiquidityLocal(
+        uint16 _srcPoolId,
+        uint256 _amountLP,
+        address _to,
+        IVault.ExitPoolRequest memory request
+    ) external override nonReentrant {
+        uint256 amountSD = _instantRedeemLocal(_srcPoolId, _amountLP, _to);
+        bytes32 balancerPoolId = balancerAndStargatePoolLookup[_srcPoolId];
+        balancerVault.exitPool(balancerPoolId, address(this), payable(owner()), request);
+    }
+
+    // function _redeemLocal(
+    //     uint16 _dstChainId,
+    //     uint256 _srcPoolId,
+    //     uint256 _dstPoolId,
+    //     address payable _refundAddress,
+    //     uint256 _amountLP,
+    //     bytes calldata _to,
+    //     lzTxObj memory _lzTxParams
+    // ) internal payable override {
+    //     require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
+    //     Pool pool = _getPool(_srcPoolId);
+    //     require(_amountLP > 0, "Stargate: not enough lp to redeem");
+    //     uint256 amountSD = pool.redeemLocal(msg.sender, _amountLP, _dstChainId, _dstPoolId, _to);
+    //     require(amountSD > 0, "Stargate: not enough lp to redeem with amountSD");
+
+    //     Pool.CreditObj memory c = pool.sendCredits(_dstChainId, _dstPoolId);
+    //     bridge.redeemLocal{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, amountSD, _to, _lzTxParams);
+    // }
+
+    function removeBalancerLiquidityLocal(
         uint16 _dstChainId,
         uint256 _srcPoolId,
         uint256 _dstPoolId,
         address payable _refundAddress,
         uint256 _amountLP,
         bytes calldata _to,
-        lzTxObj memory _lzTxParams
+        lzTxObj memory _lzTxParams,
+        IVault.ExitPoolRequest memory request
     ) external payable override nonReentrant {
+        bytes32 balancerPoolId = balancerAndStargatePoolLookup[_dstPoolId];
+        balancerVault.exitPool(balancerPoolId, address(this), payable(owner()), request);
+
         require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
         Pool pool = _getPool(_srcPoolId);
         require(_amountLP > 0, "Stargate: not enough lp to redeem");
@@ -280,7 +346,7 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         require(amountSD > 0, "Stargate: not enough lp to redeem with amountSD");
 
         Pool.CreditObj memory c = pool.sendCredits(_dstChainId, _dstPoolId);
-        bridge.redeemLocal{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, amountSD, _to, _lzTxParams);
+        // bridge.redeemLocal{value: msg.value}(_dstChainId, _srcPoolId, _dstPoolId, _refundAddress, c, amountSD, _to, _lzTxParams);
     }
 
     function sendCredits(
@@ -341,6 +407,10 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
 
         bridge.redeemLocalCallback{value: msg.value}(_dstChainId, _refundAddress, c, _lzTxParams, payload);
     }
+
+    // function revertRemoveBalancerLiquidityLocal() external payable {
+    //     _revertRedeemLocal(_dstChainId, _srcAddress, _nonce, _refundAddress, _lzTxParams);
+    // }
 
     function retryRevert(
         uint16 _srcChainId,
@@ -541,7 +611,7 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         uint256[] memory _weights, // Balancer Pool Token Weights
         address[] memory _assetManagers, // Balancer Asset Managers Per Token
         uint256 _swapFeePercentage // Balancer Pool Swap Fee Percentage
-    ) external onlyOwner returns (address poolAddress) {
+    ) external override returns (address poolAddress) {
         address balancerPoolAddress = IWeightedPoolFactory(balancerWeightedPoolFactory).create(
             _name,
             _symbol,
