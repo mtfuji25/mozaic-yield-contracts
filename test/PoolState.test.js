@@ -24,6 +24,7 @@ const {
 } = require("./util/constants")
 const { addBalancerLiquidity, equalize, mintAndSwap, removeLiquidityLocal, removeLiquidityRemote, removeLiquidityInstant } = require("./util/actions")
 const { audit, getPoolState } = require("./util/poolStateHelpers")
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 describe("Pool State: ", function () {
     this.timeout(600000000)
@@ -322,12 +323,37 @@ describe("Pool State: ", function () {
         it("redeemRemote() - nativeGasParams blocks", async function () {
             const nativeAmt = 453
             const encodedDstNativeAddr = encodePackedParams(["address"], [alice.address])
-            const lzTxParams = { dstGasForCall: 0, dstNativeAmount: nativeAmt, dstNativeAddr: encodedDstNativeAddr }
+            const lzTxParams = {
+                dstGasForCall: 0,
+                dstNativeAmount: nativeAmt,
+                dstNativeAddr: encodedDstNativeAddr
+            }
+
             const dstChainId = eth_endpoint.chainId
 
+            const router = avax_endpoint.router
+            const poolContract = await router.factory().then(f => f.getPool(DAI))
+            const request = {
+                assets: [USDC, AVAX],
+                minAmountsOut: [0, 0],
+                userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                  await poolContract.balanceOf(bob.address)
+                ),
+                toInternalBalance: false,
+            }
             // remove gas object so it gets stored properly, Passing ZERO_ADDRESS causes it to revert
             await expect(
-                avax_endpoint.router.connect(bob).redeemRemote(dstChainId, DAI, DAI, bob.address, 1000, 1, ZERO_ADDRESS, lzTxParams)
+              router.connect(bob).removeBalancerLiquidityRemote(
+                  dstChainId,
+                  DAI,
+                  DAI,
+                  bob.address,
+                  1000,
+                  1,
+                  ZERO_ADDRESS,
+                  lzTxParams,
+                  request,
+                )
             ).to.be.revertedWith("NativeGasParams check")
         })
 
@@ -380,16 +406,42 @@ describe("Pool State: ", function () {
             const srcChainId = avax_endpoint.chainId
             const dstChainId = eth_endpoint.chainId
 
+            const request = {
+                assets: [USDC, AVAX],
+                minAmountsOut: [0, 0],
+                userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                  await avax_endpoint.balanceOf(bob.address)
+                ),
+                toInternalBalance: false,
+            }
+
             await expect(
-                avax_endpoint.router.connect(bob).redeemLocal(dstChainId, DAI, DAI, bob.address, 1000, bob.address, lzTxParams)
+                avax_endpoint.router.connect(bob).removeBalancerLiquidityLocal(
+                  dstChainId,
+                  DAI,
+                  DAI,
+                  bob.address,
+                  1000,
+                  bob.address,
+                  lzTxParams,
+                  request
+                )
             ).to.be.revertedWith("NativeGasParams check")
 
             // nonce is actually the next one, hence +1
             const expectedNonce = (await avax_dai_pool.lzEndpoint.outboundNonce(dstChainId, avax_dai_pool.bridge.address)).add(1)
 
             // remove gas object so it gets stored properly, then try to send it back the other way and hopefully get a revert
-            await expect(avax_endpoint.router.connect(bob).redeemLocal(dstChainId, DAI, DAI, bob.address, 1000, bob.address, emptyLzTxObj))
-                .to.emit(eth_endpoint.router, "RevertRedeemLocal")
+            await expect(avax_endpoint.router.connect(bob).removeBalancerLiquidityLocal(
+              dstChainId,
+              DAI,
+              DAI,
+              bob.address,
+              1000,
+              bob.address,
+              emptyLzTxObj,
+              request
+            )).to.emit(eth_endpoint.router, "RevertRedeemLocal")
                 .withArgs(srcChainId, DAI, DAI, bob.address.toLowerCase(), 1000, 0, expectedNonce, avax_dai_pool.bridge.address.toLowerCase())
 
             await expect(
@@ -403,8 +455,28 @@ describe("Pool State: ", function () {
             const srcChainId = avax_endpoint.chainId
             const dstChainId = eth_endpoint.chainId
 
+            const request = {
+                assets: [USDC, AVAX],
+                minAmountsOut: [0, 0],
+                userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                  await eth_endpoint.balanceOf(bob.address)
+                ),
+                toInternalBalance: false,
+            }
             // remove gas object so it gets stored properly, then try to send it back the other way and hopefully get a revert
-            await expect(avax_endpoint.router.connect(bob).redeemLocal(dstChainId, DAI, DAI, bob.address, 1000, bob.address, emptyLzTxObj))
+            await expect(
+              avax_endpoint.router.connect(bob)
+                .removeBalancerLiquidityLocal(
+                  dstChainId,
+                  DAI,
+                  DAI,
+                  bob.address,
+                  1000,
+                  bob.address,
+                  emptyLzTxObj,
+                  request
+                )
+            )
 
             // nonce is actually the next one, hence +1
             const expectedNonce = (await avax_dai_pool.lzEndpoint.outboundNonce(dstChainId, avax_dai_pool.bridge.address)).add(1)
@@ -644,7 +716,21 @@ describe("Pool State: ", function () {
     })
 
     it("instantRedeemLocal() - reverts when totalLiquidity is 0", async function () {
-        await expect(avax_dai_pool.router.connect(alice).instantRedeemLocal(avax_dai_pool.id, 1, ZERO_ADDRESS)).to.revertedWith(
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+              await avax_dai_pool.balanceOf(alice.address)
+            ),
+            toInternalBalance: false,
+        }
+
+        await expect(avax_dai_pool.connect(alice).instantRemoveBalancerLiquidityLocal(
+          avax_dai_pool.id,
+          1,
+          ZERO_ADDRESS,
+          request
+        )).to.revertedWith(
             "Stargate: cant convert SDtoLP when totalLiq == 0'"
         )
     })
