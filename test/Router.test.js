@@ -1,7 +1,8 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
-const { ZERO_ADDRESS } = require("./util/constants")
+const { ZERO_ADDRESS, DAI, USDC, AVAX } = require("./util/constants")
 const { deployNew, getAddr, getPoolFromFactory } = require("./util/helpers")
+const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
 // const { MONTH} = require('@balancer-labs/v2-helpers/src/time')
 const MONTH = 60 * 60 * 24 * 30;
@@ -89,32 +90,33 @@ describe("Router", function () {
     /////     await expect(router.addBalancerLiquidity(defaultAmountLD, poolId, owner.address)).to.be.revertedWith("Stargate: Pool does not exist")
     ///// })
 
+    
+    // -----  create balancer pool ----- //
     it("createBalancerPool() - reverts when swapFeePercentage is out of range", async function () {
         weth = await deployNew("WETH9")
-        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 200)).to.be.revertedWith("BAL#203")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], 200)).to.be.revertedWith("BAL#203")
     })
 
     it("createBalancerPool() - reverts when there're less than 2 tokens", async function () {
         weth = await deployNew("WETH9")
-        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#200")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#200")
     })
 
     it("createBalancerPool() - reverts when token is 0x0", async function () {
         weth = await deployNew("WETH9")
-        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#309")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#309")
     })
 
     it("createBalancerPool() - reverts when token array is unsorted", async function () {
         weth = await deployNew("WETH9")
-        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#101")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#101")
     })
 
-    it("createBalancerPool() - reverts with non owner", async function () {
+    it("createBalancerPool() - reverts with weight out of range", async function () {
         weth = await deployNew("WETH9")
-        await expect(router.connect(alice).createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [40, 60], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith(
-            "Ownable: caller is not the owner"
-        )
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [fakeContract.address, weth.address], [50, 50], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#302")
     })
+
 
     it("swap() - reverts when refund address is 0x0", async function () {
         await expect(
