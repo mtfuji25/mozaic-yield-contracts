@@ -30,10 +30,11 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
-"@balancer-labs/balancer-js@file:../dependencies/balancer-js":
+"@balancer-labs/balancer-js@https://github.com/Mozaic-fi/balancer-js":
   version "1.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-js#cd67ef518e486482ddc28f851081dec7cc3aed46"
   dependencies:
-    "@balancer-labs/typechain" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-balancer-js-1.0.0-00a58bb9-c41e-45c1-8f3e-6b0d42202159-1662973268949/node_modules/@balancer-labs/balancer-typechain"
+    "@balancer-labs/typechain" "https://github.com/Mozaic-fi/balancer-typechain"
     "@ethersproject/abi" "^5.4.0"
     "@ethersproject/abstract-signer" "^5.4.0"
     "@ethersproject/address" "^5.4.0"
@@ -42,20 +43,24 @@
     "@ethersproject/constants" "^5.4.0"
     "@ethersproject/contracts" "^5.4.0"
 
-"@balancer-labs/typechain@file:../dependencies/balancer-typechain":
+"@balancer-labs/typechain@https://github.com/Mozaic-fi/balancer-typechain":
   version "1.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-typechain#cf6c252b7e29281a5de5e843d3c73993442d8bdf"
 
-"@balancer-labs/v2-asset-manager-utils@file:../dependencies/balancer-asset-manager-utils":
+"@balancer-labs/v2-asset-manager-utils@https://github.com/Mozaic-fi/balancer-asset-manager-utils":
   version "0.2.0"
+  resolved "https://github.com/Mozaic-fi/balancer-asset-manager-utils#6408c47800f26467b1de5515ae6461495576227c"
   dependencies:
-    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-asset-manager-utils-0.2.0-3ebd9cb7-4178-49d4-bf9c-f91fcc6abe03-1662973268945/node_modules/@balancer-labs/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-asset-manager-utils-0.2.0-3ebd9cb7-4178-49d4-bf9c-f91fcc6abe03-1662973268945/node_modules/@balancer-labs/balancer-vault"
+    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
 
-"@balancer-labs/v2-deployments@file:../dependencies/balancer-deployments":
+"@balancer-labs/v2-deployments@https://github.com/Mozaic-fi/balancer-deployments":
   version "2.3.0"
+  resolved "https://github.com/Mozaic-fi/balancer-deployments#cafc8483616ca96324a6d5e5ba08d631fca8eefb"
 
-"@balancer-labs/v2-helpers@file:../dependencies/balancer-helpers":
+"@balancer-labs/v2-helpers@https://github.com/Mozaic-fi/balancer-helpers":
   version "1.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-helpers#4d30f4805a3939c5da1ddc60a9ca22891364e21f"
   dependencies:
     "@nomiclabs/hardhat-ethers" "^2.0.1"
     "@types/lodash" "^4.14.161"
@@ -68,27 +73,31 @@
     ts-node "^8.10.2"
     typescript "^4.0.2"
 
-"@balancer-labs/v2-pool-utils@file:../dependencies/balancer-pool-utils":
+"@balancer-labs/v2-pool-utils@https://github.com/Mozaic-fi/balancer-pool-utils":
   version "2.0.1"
+  resolved "https://github.com/Mozaic-fi/balancer-pool-utils#ce9db16430df1086a62ba75c821a40327aa509b9"
   dependencies:
-    "@balancer-labs/v2-asset-manager-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-asset-manager-utils"
-    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-utils-2.0.1-67d8f0ce-61c5-448f-874e-f96558dce83f-1662973268942/node_modules/@balancer-labs/balancer-vault"
+    "@balancer-labs/v2-asset-manager-utils" "https://github.com/Mozaic-fi/balancer-asset-manager-utils"
+    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
 
-"@balancer-labs/v2-pool-weighted@file:../dependencies/balancer-pool-weighted":
+"@balancer-labs/v2-pool-weighted@https://github.com/Mozaic-fi/balancer-pool-weighted":
   version "2.0.1"
+  resolved "https://github.com/Mozaic-fi/balancer-pool-weighted#ade5db1064750b1439dc87dcc9527cf844859621"
   dependencies:
-    "@balancer-labs/v2-pool-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-pool-utils"
-    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-solidity-utils"
-    "@balancer-labs/v2-vault" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-pool-weighted-2.0.1-81e33143-5e87-40f6-a5ef-f24800696923-1662973268937/node_modules/@balancer-labs/balancer-vault"
+    "@balancer-labs/v2-pool-utils" "https://github.com/Mozaic-fi/balancer-pool-utils"
+    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
+    "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
 
-"@balancer-labs/v2-solidity-utils@file:../dependencies/balancer-solidity-utils":
+"@balancer-labs/v2-solidity-utils@https://github.com/Mozaic-fi/balancer-solidity-utils":
   version "2.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-solidity-utils#f8f29824ee6d0be484c2353e0bfaf6e5c769b0d7"
 
-"@balancer-labs/v2-vault@file:../dependencies/balancer-vault":
+"@balancer-labs/v2-vault@https://github.com/Mozaic-fi/balancer-vault":
   version "2.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-vault#fc7f6256369afc014f5f96a645eac6c91b0951a0"
   dependencies:
-    "@balancer-labs/v2-solidity-utils" "file:../../../../Users/yrh/Library/Caches/Yarn/v6/npm-@balancer-labs-v2-vault-2.0.0-e964db06-34f4-4ecf-a97c-c21bca73aa10-1662973268943/node_modules/@balancer-labs/balancer-solidity-utils"
+    "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
 
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
