@@ -1,6 +1,6 @@
 const { expect } = require("chai")
 const { ethers } = require("hardhat")
-const { ZERO_ADDRESS, DAI, USDC, AVAX} = require("./util/constants")
+const { ZERO_ADDRESS, DAI, USDC, AVAX } = require("./util/constants")
 const { deployNew, getAddr, getPoolFromFactory } = require("./util/helpers")
 const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
 
@@ -36,7 +36,7 @@ describe("Router", function () {
 
     beforeEach(async function () {
         lzEndpoint = await deployNew("LZEndpointMock", [chainId])
-
+        
         weth = await deployNew("WETH9")
         authorizer = await deployNew("Authorizer", [owner.address])
         vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
@@ -60,22 +60,22 @@ describe("Router", function () {
         )
     })
 
-    it("setBridgeAndFactory() - reverts when factory already initialized", async function () {
-        weth = await deployNew("WETH9")
-        authorizer = await deployNew("Authorizer", [owner.address])
-        vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
-        weightedPoolFactory = await deployNew("WeightedPoolFactory", [vault.address])
-        router = await deployNew("Router", [weth.address, vault.address, weightedPoolFactory.address])
-        const factoryPositionInStorage = "0x2" // position in contract storage
-        const setFactoryStorage = "0x0000000000000000000000000000000000000000000000000000000000000001" // sets the factory address to 0x1
+    // it("setBridgeAndFactory() - reverts when factory already initialized", async function () {
+    //     weth = await deployNew("WETH9")
+    //     authorizer = await deployNew("Authorizer", [owner.address])
+    //     vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
+    //     weightedPoolFactory = await deployNew("WeightedPoolFactory", [vault.address])
+    //     router = await deployNew("Router", [weth.address, vault.address, weightedPoolFactory.address])
+    //     const factoryPositionInStorage = "0x2" // position in contract storage
+    //     const setFactoryStorage = "0x0000000000000000000000000000000000000000000000000000000000000001" // sets the factory address to 0x1
 
-        // set factory to 0x1
-        await network.provider.send("hardhat_setStorageAt", [router.address, factoryPositionInStorage, setFactoryStorage])
+    //     // set factory to 0x1
+    //     await network.provider.send("hardhat_setStorageAt", [router.address, factoryPositionInStorage, setFactoryStorage])
 
-        await expect(router.setBridgeAndFactory(fakeContract.address, fakeContract.address)).to.be.revertedWith(
-            "Stargate: bridge and factory already initialized"
-        )
-    })
+    //     await expect(router.setBridgeAndFactory(fakeContract.address, fakeContract.address)).to.be.revertedWith(
+    //         "Stargate: bridge and factory already initialized"
+    //     )
+    // })
 
     it("setBridgeAndFactory() - reverts when bridge is 0x0", async function () {
         weth = await deployNew("WETH9")
@@ -95,61 +95,32 @@ describe("Router", function () {
         await expect(router.setBridgeAndFactory(fakeContract.address, ZERO_ADDRESS)).to.be.revertedWith("Stargate: factory cant be 0x0")
     })
 
-    it("addBalancerLiquidity() - reverts for non existant pool ", async function () {
-        // error code 200 is 'INVALID_POOL_ID'
-        await expect(
-            router.addBalancerLiquidity(
-                defaultAmountLD, 
-                {
-                    assets: [],
-                    maxAmountsIn: [],
-                    userData: "0x",
-                    fromInternalBalance: false
-                }
-            )
-        ).to.be.revertedWith("BAL#500")
+    // -----  create balancer pool ----- //
+    it("createBalancerPool() - reverts when swapFeePercentage is out of range", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], 200)).to.be.revertedWith("BAL#203")
     })
 
-    it("createBalancerPool() - pool length should bigger than 1", async function () {
-        // https://dev.balancer.fi/references/error-codes
-        // error code 200 is 'All pools must contain at least two tokens'
-        await expect(
-            router.createBalancerPool(
-                poolId, 
-                "x", 
-                "x*",
-                [ZERO_ADDRESS],
-                [ethers.utils.parseEther("1")],
-                [ZERO_ADDRESS],
-                ethers.utils.parseEther("0.001")
-            )
-        ).to.be.revertedWith("BAL#200")
+    it("createBalancerPool() - reverts when there're less than 2 tokens", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#200")
     })
 
     it("createBalancerPool() - reverts when token is 0x0", async function () {
-        // https://dev.balancer.fi/references/error-codes
-        // error code 309 is 'INVALID_TOKEN'
-        await expect(
-            router.createBalancerPool(
-                poolId, 
-                "x", 
-                "x*",
-                [
-                    ZERO_ADDRESS, 
-                    fakeContract.address
-                ],
-                [
-                    ethers.utils.parseEther("0.5"),
-                    ethers.utils.parseEther("0.5")
-                ],
-                [
-                    ZERO_ADDRESS, 
-                    fakeContract.address
-                ],
-                ethers.utils.parseEther("0.001")
-            )
-        ).to.be.revertedWith("BAL#309")
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#309")
     })
+
+    it("createBalancerPool() - reverts when token array is unsorted", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address, ZERO_ADDRESS], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#101")
+    })
+
+    it("createBalancerPool() - reverts with weight out of range", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [fakeContract.address, weth.address], [50, 50], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#302")
+    })
+
 
     it("swap() - reverts when refund address is 0x0", async function () {
         await expect(
@@ -168,110 +139,32 @@ describe("Router", function () {
     })
 
     it("redeemRemote() - reverts when refund address is 0x0", async function () {
-        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-        const request = {
-            assets: [USDC, AVAX],
-            minAmountsOut: [0, 0],
-            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-              await poolContract.balanceOf(ZERO_ADDRESS)
-            ),
-            toInternalBalance: false,
-        }
-
-
         await expect(
-            router.removeBalancerLiquidityRemote(
-              chainId,
-              poolId,
-              dstPoolId,
-              ZERO_ADDRESS,
-              1,
-              0,
-              "0x",
-              {
+            router.redeemRemote(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, 0, "0x", {
                 dstGasForCall: 0,
                 dstNativeAmount: 0,
                 dstNativeAddr: "0x",
-              },
-              request
-            )
+            })
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
     it("redeemRemote() - reverts when amount LP is 0", async function () {
-        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-        const request = {
-            assets: [USDC, AVAX],
-            minAmountsOut: [0, 0],
-            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-              await poolContract.balanceOf(fakeContract.address)
-            ),
-            toInternalBalance: false,
-        }
-
         await expect(
-            router.removeBalancerLiquidityRemote(
-              chainId,
-              poolId,
-              dstPoolId,
-              fakeContract.address,
-              0,
-              0,
-              "0x",
-              {
+            router.redeemRemote(chainId, poolId, dstPoolId, fakeContract.address, 0, 0, "0x", {
                 dstGasForCall: 0,
                 dstNativeAmount: 0,
                 dstNativeAddr: "0x",
-              },
-              request
-            )
+            })
         ).to.be.revertedWith("Stargate: not enough lp to redeemRemote")
     })
 
     it("instantRedeemLocal() - reverts with 0 lp", async function () {
-        const poolContract = await router.factory().then(f => f.getPool(poolId))
-        const request = {
-            assets: [USDC, AVAX],
-            minAmountsOut: [0, 0],
-            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-              await poolContract.balanceOf(alice.address)
-            ),
-            toInternalBalance: false,
-        }
-
-        await expect(router.instantRemoveBalancerLiquidityLocal(
-          poolId,
-          0,
-          ZERO_ADDRESS,
-          request
-        )).to.revertedWith("Stargate: not enough lp to redeem")
+        await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
     })
 
     it("redeemLocal() - reverts when refund address is 0x0", async function () {
-        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-        const request = {
-            assets: [USDC, AVAX],
-            minAmountsOut: [0, 0],
-            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-              await poolContract.balanceOf(ZERO_ADDRESS)
-            ),
-            toInternalBalance: false,
-        }
         await expect(
-            router.removeBalancerLiquidityLocal(
-              chainId,
-              poolId,
-              dstPoolId,
-              ZERO_ADDRESS,
-              1,
-              "0x",
-              {
-                  dstGasForCall: 0,
-                  dstNativeAmount: 0,
-                  dstNativeAddr: "0x"
-              },
-              request
-          )
+            router.redeemLocal(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, "0x", { dstGasForCall: 0, dstNativeAmount: 0, dstNativeAddr: "0x" })
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
