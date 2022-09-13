@@ -624,6 +624,8 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         uint8 sharedDecimals = 18; // All balancer pool token decimals are 18
         uint8 localDecimals = sharedDecimals;
         poolAddress = _createPool(_poolId, balancerPoolAddress, sharedDecimals, localDecimals, _name, _symbol);
+        bytes32 balancerPoolId = IWeightedPoolFactory(balancerWeightedPoolFactory).getPoolId();
+        balancerAndStargatePoolLookup[_poolId] = balancerPoolId;
     }
 
     function createChainPath(
