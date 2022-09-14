@@ -22,7 +22,7 @@ describe("Router", function () {
     let defaultAmountLD, defaultAmountSD, nonce
 
     before(async function () {
-        ;({ owner, alice, badUser1, fakeContract } = await getAddr(ethers))
+        ; ({ owner, alice, badUser1, fakeContract } = await getAddr(ethers))
         defaultAmountLD = 123
         defaultAmountSD = 123
         chainId = 1
@@ -36,7 +36,7 @@ describe("Router", function () {
 
     beforeEach(async function () {
         lzEndpoint = await deployNew("LZEndpointMock", [chainId])
-        
+
         weth = await deployNew("WETH9")
         authorizer = await deployNew("Authorizer", [owner.address])
         vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
@@ -150,32 +150,95 @@ describe("Router", function () {
     })
 
     it("redeemRemote() - reverts when refund address is 0x0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                await poolContract.balanceOf(ZERO_ADDRESS)
+            ),
+            toInternalBalance: false,
+        }
+
+
         await expect(
-            router.redeemRemote(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, 0, "0x", {
-                dstGasForCall: 0,
-                dstNativeAmount: 0,
-                dstNativeAddr: "0x",
-            })
+            router.removeBalancerLiquidityRemote(
+                chainId,
+                poolId,
+                dstPoolId,
+                ZERO_ADDRESS,
+                1,
+                0,
+                "0x",
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x",
+                },
+                request
+            )
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
     it("redeemRemote() - reverts when amount LP is 0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                await poolContract.balanceOf(fakeContract.address)
+            ),
+            toInternalBalance: false,
+        }
+
         await expect(
-            router.redeemRemote(chainId, poolId, dstPoolId, fakeContract.address, 0, 0, "0x", {
-                dstGasForCall: 0,
-                dstNativeAmount: 0,
-                dstNativeAddr: "0x",
-            })
+            router.removeBalancerLiquidityRemote(
+                chainId,
+                poolId,
+                dstPoolId,
+                fakeContract.address,
+                0,
+                0,
+                "0x",
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x",
+                },
+                request
+            )
         ).to.be.revertedWith("Stargate: not enough lp to redeemRemote")
     })
 
-    it("instantRedeemLocal() - reverts with 0 lp", async function () {
-        await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
-    })
+    // it("instantRedeemLocal() - reverts with 0 lp", async function () {
+    //     await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
+    // })
 
     it("redeemLocal() - reverts when refund address is 0x0", async function () {
+        const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
+        const request = {
+            assets: [USDC, AVAX],
+            minAmountsOut: [0, 0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                await poolContract.balanceOf(ZERO_ADDRESS)
+            ),
+            toInternalBalance: false,
+        }
         await expect(
-            router.redeemLocal(chainId, poolId, dstPoolId, ZERO_ADDRESS, 1, "0x", { dstGasForCall: 0, dstNativeAmount: 0, dstNativeAddr: "0x" })
+            router.removeBalancerLiquidityLocal(
+                chainId,
+                poolId,
+                dstPoolId,
+                ZERO_ADDRESS,
+                1,
+                "0x",
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x"
+                },
+                request
+            )
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
@@ -240,8 +303,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            dstPoolId, 
-            "x", 
+            dstPoolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -283,25 +346,25 @@ describe("Router", function () {
     it("createBalancerPool() - reverts with non owner", async function () {
         await expect(
             router
-            .connect(alice)
-            .createBalancerPool(
-                poolId, 
-                "x", 
-                "x*",
-                [
-                    ZERO_ADDRESS, 
-                    fakeContract.address
-                ],
-                [
-                    ethers.utils.parseEther("0.5"),
-                    ethers.utils.parseEther("0.5")
-                ],
-                [
-                    ZERO_ADDRESS, 
-                    fakeContract.address
-                ],
-                ethers.utils.parseEther("0.001")
-            )
+                .connect(alice)
+                .createBalancerPool(
+                    poolId,
+                    "x",
+                    "x*",
+                    [
+                        ZERO_ADDRESS,
+                        fakeContract.address
+                    ],
+                    [
+                        ethers.utils.parseEther("0.5"),
+                        ethers.utils.parseEther("0.5")
+                    ],
+                    [
+                        ZERO_ADDRESS,
+                        fakeContract.address
+                    ],
+                    ethers.utils.parseEther("0.001")
+                )
         ).to.be.revertedWith("Ownable: caller is not the owner")
     })
 
@@ -324,8 +387,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            poolId, 
-            "x", 
+            poolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -377,8 +440,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            poolId, 
-            "x", 
+            poolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -396,8 +459,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            poolId, 
-            "x", 
+            poolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -415,8 +478,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            poolId, 
-            "x", 
+            poolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -438,8 +501,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            dstPoolId, 
-            "x", 
+            dstPoolId,
+            "x",
             "x*",
             arr,
             percentArr,
@@ -462,8 +525,8 @@ describe("Router", function () {
         const arr = sortArr(weth.address, mockToken.address)
 
         await router.createBalancerPool(
-            dstPoolId, 
-            "x", 
+            dstPoolId,
+            "x",
             "x*",
             arr,
             percentArr,
