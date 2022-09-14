@@ -12,12 +12,12 @@ const { ethers } = require("hardhat")
 const { expect } = require("chai")
 const { BigNumber } = require("ethers")
 const {USDC, AVAX} = require("./constants");
-const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
+const { WeightedPoolEncoder } = require("@balancer-labs/balancer-js");
 
 const verbose = false
 
 addBalancerLiquidity = async (srcPoolObj, user, amountLD) => {
-    const { router, pool, token } = srcPoolObj
+    const { vault, pool, token } = srcPoolObj
     const amountSD = amountLDtoSD(BigNumber.from(amountLD), srcPoolObj)
 
     // when converting between shared and local decimals, the rounding error just stays inside the users wallet
@@ -35,7 +35,7 @@ addBalancerLiquidity = async (srcPoolObj, user, amountLD) => {
     const srcUserTokenBal = await token.balanceOf(user.address)
     const srcPoolTokenBal = await token.balanceOf(pool.address)
     await token.mint(user.address, amountLD)
-    await token.connect(user).increaseAllowance(router.address, amountLD)
+    await token.connect(user).increaseAllowance(vault.address, amountLD)
 
     await callAddBalancerLiquidity(srcPoolObj, user, amountLD)
 
@@ -235,7 +235,21 @@ callDelta = async (srcPoolObj, dstPoolObj, fullMode) => {
 }
 
 callAddBalancerLiquidity = async (poolObj, user, amountLd) => {
-    await poolObj.router.connect(user).addBalancerLiquidity(poolObj.id, amountLd, user.address)
+    await poolObj.router.connect(user).addBalancerLiquidity(
+        poolObj.id,
+        {
+            assets: [
+                poolObj.token.address
+            ],
+            maxAmountsIn: [
+                amountLd
+            ],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                await poolObj.balanceOf(user.address)
+            ),
+            fromInternalBalance: false
+        }
+    )
 }
 
 callRedeemInstant = async (poolObj, user, amountLP, amountSD) => {
