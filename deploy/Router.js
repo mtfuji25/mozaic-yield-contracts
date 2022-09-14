@@ -11,8 +11,6 @@ module.exports = async ({ ethers, getNamedAccounts, deployments }) => {
         skipIfAlreadyDeployed: true,
         waitConfirmations: 1,
     })
-
-    console.log(deployer);
     
     await deploy("Authorizer", {
         from: deployer,
