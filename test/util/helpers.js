@@ -82,6 +82,15 @@ getPoolFromFactory = async (factory, poolId) => {
     return await Pool.attach(poolAddr)
 }
 
+getPoolWith = async (routerInst, poolId) => {
+    const factory = await Promise.all([
+        ethers.getContractFactory("Factory"),
+        routerInst.factory(),
+    ])
+      .then(([F, fAddr]) => F.attach(fAddr))
+    return getPoolFromFactory(factory, poolId)
+}
+
 getFeesFromFeeLibraryForPool = async (srcPoolObj, dstPoolObj, user, srcAmountSD) => {
     const feeLibrary = await getFeeLibraryFromPool(srcPoolObj.pool)
     return await feeLibrary.getFees(srcPoolObj.id, dstPoolObj.id, dstPoolObj.chainId, user.address, srcAmountSD)
@@ -214,6 +223,7 @@ module.exports = {
     getFeeLibraryFromPool,
     getFeesFromFeeLibraryForPool,
     getPoolFromFactory,
+    getPoolWith,
     getDefaultLzTxParams,
     getRoundingDust,
     getCurrentBlock,

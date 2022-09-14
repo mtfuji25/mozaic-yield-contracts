@@ -194,7 +194,7 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
     }
 
     function addBalancerLiquidity(
-        uint256 _poolId, 
+        uint256 _poolId,
         IVault.JoinPoolRequest memory request
     ) external payable override nonReentrant {
         bytes32 balancerPoolId = balancerAndStargatePoolLookup[_poolId];
@@ -266,7 +266,7 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         uint256 _amountLP,
         uint256 _minAmountLD,
         bytes calldata _to,
-        lzTxObj memory _lzTxParams, 
+        lzTxObj memory _lzTxParams,
         IVault.ExitPoolRequest memory request
     ) external payable override nonReentrant {
         // bytes32 balancerPoolId = balancerAndStargatePoolLookup[_dstPoolId];
@@ -338,10 +338,10 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         lzTxObj memory _lzTxParams,
         IVault.ExitPoolRequest memory request
     ) external payable override nonReentrant {
+        require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
         bytes32 balancerPoolId = balancerAndStargatePoolLookup[_dstPoolId];
         balancerVault.exitPool(balancerPoolId, address(this), payable(owner()), request);
 
-        require(_refundAddress != address(0x0), "Stargate: _refundAddress cannot be 0x0");
         Pool pool = _getPool(_srcPoolId);
         require(_amountLP > 0, "Stargate: not enough lp to redeem");
         uint256 amountSD = pool.redeemLocal(msg.sender, _amountLP, _dstChainId, _dstPoolId, _to);

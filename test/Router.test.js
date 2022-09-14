@@ -149,98 +149,89 @@ describe("Router", function () {
         ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
     })
 
-    // it("redeemRemote() - reverts when refund address is 0x0", async function () {
-    //     const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-    //     const request = {
-    //         assets: [USDC, AVAX],
-    //         minAmountsOut: [0, 0],
-    //         userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-    //             await poolContract.balanceOf(ZERO_ADDRESS)
-    //         ),
-    //         toInternalBalance: false,
-    //     }
+    it("redeemRemote() - reverts when refund address is 0x0", async function () {
+        const request = {
+            assets: [weth.address],
+            minAmountsOut: [0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut("0"),
+            toInternalBalance: false,
+        }
 
 
-    //     await expect(
-    //         router.removeBalancerLiquidityRemote(
-    //             chainId,
-    //             poolId,
-    //             dstPoolId,
-    //             ZERO_ADDRESS,
-    //             1,
-    //             0,
-    //             "0x",
-    //             {
-    //                 dstGasForCall: 0,
-    //                 dstNativeAmount: 0,
-    //                 dstNativeAddr: "0x",
-    //             },
-    //             request
-    //         )
-    //     ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
-    // })
+        await expect(
+            router.removeBalancerLiquidityRemote(
+                chainId,
+                poolId,
+                dstPoolId,
+                ZERO_ADDRESS,
+                1,
+                0,
+                "0x",
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x",
+                },
+                request
+            )
+        ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
+    })
 
-    // it("redeemRemote() - reverts when amount LP is 0", async function () {
-    //     const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-    //     const request = {
-    //         assets: [USDC, AVAX],
-    //         minAmountsOut: [0, 0],
-    //         userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-    //             await poolContract.balanceOf(fakeContract.address)
-    //         ),
-    //         toInternalBalance: false,
-    //     }
+    it("redeemRemote() - reverts when amount LP is 0", async function () {
+        const request = {
+            assets: [weth.address],
+            minAmountsOut: [0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut("0"),
+            toInternalBalance: false,
+        }
 
-    //     await expect(
-    //         router.removeBalancerLiquidityRemote(
-    //             chainId,
-    //             poolId,
-    //             dstPoolId,
-    //             fakeContract.address,
-    //             0,
-    //             0,
-    //             "0x",
-    //             {
-    //                 dstGasForCall: 0,
-    //                 dstNativeAmount: 0,
-    //                 dstNativeAddr: "0x",
-    //             },
-    //             request
-    //         )
-    //     ).to.be.revertedWith("Stargate: not enough lp to redeemRemote")
-    // })
+        await expect(
+            router.removeBalancerLiquidityRemote(
+                chainId,
+                poolId,
+                dstPoolId,
+                fakeContract.address,
+                0,
+                0,
+                "0x",
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x",
+                },
+                request
+            )
+        ).to.be.revertedWith("Stargate: not enough lp to redeemRemote")
+    })
 
     // it("instantRedeemLocal() - reverts with 0 lp", async function () {
     //     await expect(router.instantRedeemLocal(poolId, 0, ZERO_ADDRESS)).to.revertedWith("Stargate: not enough lp to redeem")
     // })
 
-    // it("redeemLocal() - reverts when refund address is 0x0", async function () {
-    //     const poolContract = await router.factory().then(f => f.getPool(dstPoolId))
-    //     const request = {
-    //         assets: [USDC, AVAX],
-    //         minAmountsOut: [0, 0],
-    //         userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
-    //             await poolContract.balanceOf(ZERO_ADDRESS)
-    //         ),
-    //         toInternalBalance: false,
-    //     }
-    //     await expect(
-    //         router.removeBalancerLiquidityLocal(
-    //             chainId,
-    //             poolId,
-    //             dstPoolId,
-    //             ZERO_ADDRESS,
-    //             1,
-    //             "0x",
-    //             {
-    //                 dstGasForCall: 0,
-    //                 dstNativeAmount: 0,
-    //                 dstNativeAddr: "0x"
-    //             },
-    //             request
-    //         )
-    //     ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
-    // })
+    it("redeemLocal() - reverts when refund address is 0x0", async function () {
+        const request = {
+            assets: [weth.address],
+            minAmountsOut: [0],
+            userData: WeightedPoolEncoder.exitExactBPTInForTokensOut("0"),
+            toInternalBalance: false,
+        }
+        await expect(
+            router.removeBalancerLiquidityLocal(
+                chainId,
+                poolId,
+                dstPoolId,
+                ZERO_ADDRESS,
+                1,
+                '0x',
+                {
+                    dstGasForCall: 0,
+                    dstNativeAmount: 0,
+                    dstNativeAddr: "0x"
+                },
+                request
+            )
+        ).to.be.revertedWith("Stargate: _refundAddress cannot be 0x0")
+    })
 
     it("sendCredits() - Reverts when refund address is 0x0", async function () {
         await expect(router.sendCredits(dstChainId, poolId, dstPoolId, ZERO_ADDRESS)).to.be.revertedWith(

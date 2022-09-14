@@ -11,7 +11,7 @@ const {
     encodeParams,
     amountSDtoLD,
     amountLDtoSD,
-    getPoolFromFactory,
+    getPoolFromFactory, getPoolWith,
 } = require("./util/helpers")
 const {
     ZERO_ADDRESS,
@@ -334,7 +334,7 @@ describe("Pool State: ", function () {
             const dstChainId = eth_endpoint.chainId
 
             const router = avax_endpoint.router
-            const poolContract = await router.factory().then(f => f.getPool(DAI))
+            const poolContract = await getPoolWith(router, DAI)
             const request = {
                 assets: [USDC, AVAX],
                 minAmountsOut: [0, 0],
