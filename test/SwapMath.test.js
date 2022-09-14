@@ -19,7 +19,7 @@ abiDecoder.addABI([...routerDepl.abi])
 //     - GB is solvent for all LP + stargateFee + equilibriumFee withdrawals at anytime
 //     - All chainpaths are solvent for IFG(instant finality guarantee)
 
-describe.only("SwapMath", function () {
+describe("SwapMath", function () {
     printVerbose = function (msg) {
         if (DEBUG) console.log(msg)
     }
