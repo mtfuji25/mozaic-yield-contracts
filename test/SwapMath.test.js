@@ -19,7 +19,7 @@ abiDecoder.addABI([...routerDepl.abi])
 //     - GB is solvent for all LP + stargateFee + equilibriumFee withdrawals at anytime
 //     - All chainpaths are solvent for IFG(instant finality guarantee)
 
-describe("SwapMath", function () {
+describe.only("SwapMath", function () {
     printVerbose = function (msg) {
         if (DEBUG) console.log(msg)
     }
@@ -88,22 +88,26 @@ describe("SwapMath", function () {
         for (const token of this.globalBook.tokenList) {
             for (let i = 1; i < 4; i++) {
                 await mintAndApproveFunds(token, this.accounts[i], await toPowerOfDecimals(mintAmount, token), [
-                    this.stargateA.router.address,
-                    this.stargateB.router.address,
-                    this.stargateC.router.address,
+                    this.stargateA.vault.address,
+                    this.stargateB.vault.address,
+                    this.stargateC.vault.address,
                 ])
             }
         }
 
+        console.log(111);
+
         // //== 3. Provision initial liquiditiy
         // //provision chainpath A->B
         printVerbose("alice lp++ 5000 to A")
-        await this.globalBook.provisionLiquidity(this.alice, this.chainAId, this.poolAId, 5000)
+        await this.globalBook.provisionLiquidity(this.alice, this.chainAId, this.poolAId, this.globalBook.tokenList[0].address, 5000)
         printVerbose("alice lp++ 5000 to B")
-        await this.globalBook.provisionLiquidity(this.alice, this.chainBId, this.poolBId, 5000)
+        await this.globalBook.provisionLiquidity(this.alice, this.chainBId, this.poolBId, this.globalBook.tokenList[1].address, 5000)
 
         printVerbose("alice lp++ 5000 to C")
-        await this.globalBook.provisionLiquidity(this.alice, this.chainCId, this.poolAId, 5000)
+        
+        await this.globalBook.provisionLiquidity(this.alice, this.chainCId, this.poolAId, this.globalBook.tokenList[2].address, 5000)
+        console.log(222);
     })
 
     it("no fee swap test, vanilla delta", async function () {

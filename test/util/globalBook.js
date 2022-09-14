@@ -1,6 +1,10 @@
 const { ethers } = require("hardhat")
 const { expect } = require("chai")
+const { WeightedPoolEncoder } = require("@balancer-labs/balancer-js");
 const { DEBUG } = require("./constants")
+const { deployNew, getAddr, sortArr } = require("./helpers")
+
+const MONTH = 60 * 60 * 24 * 30;
 
 function print(msg) {
     if (DEBUG) print(msg)
@@ -11,8 +15,18 @@ async function deployStargateContracts(_chainId) {
     const lzEndpoint = await lzEndpointContract.deploy(_chainId)
     await lzEndpoint.deployed()
 
+    const { owner } = await getAddr(ethers)
+    const weth = await deployNew("WETH9")
+    const authorizer = await deployNew("Authorizer", [owner.address])
+    const vault = await deployNew("Vault", [authorizer.address, weth.address, 3 * MONTH, MONTH])
+    const weightedPoolFactory = await deployNew("WeightedPoolFactory", [vault.address])
+
     const routerContract = await ethers.getContractFactory("Router") // Router.sol
-    const router = await routerContract.deploy()
+    const router = await routerContract.deploy(
+        weth.address,
+        vault.address,
+        weightedPoolFactory.address
+    );
     await router.deployed()
 
     const bridgeContract = await ethers.getContractFactory("Bridge") // Bridge.sol
@@ -32,12 +46,27 @@ async function deployStargateContracts(_chainId) {
     //set deploy params
     await (await router.setBridgeAndFactory(bridge.address, factory.address)).wait()
 
-    return { factory, router, bridge, lzEndpoint, feeLibrary }
+    return { factory, router, bridge, lzEndpoint, feeLibrary, vault }
 }
 
-async function deployPool(_poolContract, _factory, _router, _poolId, _token, _sharedDecimals) {
+async function deployPool(_poolContract, _factory, _router, _poolId, _token) {
+    const MockToken = await ethers.getContractFactory("MockToken")
+    const mockToken = await MockToken.deploy("Mock", "MCK", 18);
+    const arr = sortArr(_token.address, mockToken.address)
+
     //create pool
-    await _router.createPool(_poolId, _token.address, _sharedDecimals, await _token.decimals(), "x", "x*")
+    await _router.createBalancerPool(
+        _poolId, 
+        "x", 
+        "x*",
+        arr,
+        [
+            ethers.utils.parseEther("0.5"),
+            ethers.utils.parseEther("0.5")
+        ],
+        arr,
+        ethers.utils.parseEther("0.001")
+    )
     return _poolContract.attach(await _factory.getPool(_poolId))
 }
 
@@ -79,12 +108,12 @@ async function bridgeStargateEndpoints(stargateEndpoints) {
 class GlobalBook {
     constructor() {
         this.stargateEndpoints = {} //chainId => stargateEndpoint
-        this.sharedDecimals = 6
+        // this.sharedDecimals = 6
         this.tokenList = []
     }
 
     async newStargateEndpoint(_newChainId, _name, _poolsParams) {
-        const { factory, router, bridge, lzEndpoint, feeLibrary } = await deployStargateContracts(_newChainId, _poolsParams)
+        const { factory, router, bridge, lzEndpoint, feeLibrary, vault } = await deployStargateContracts(_newChainId, _poolsParams)
 
         //create poolInfos
         const poolInfos = {} //id => poolInfo
@@ -99,7 +128,7 @@ class GlobalBook {
             const token = await deployToken(mockTokenContract, tokenInfo.name, tokenInfo.symbol, tokenInfo.decimals)
             this.tokenList.push(token)
 
-            const newPool = await deployPool(poolContract, factory, router, newPoolId, token, this.sharedDecimals)
+            const newPool = await deployPool(poolContract, factory, router, newPoolId, token)
 
             // connect exiting pools to the new pool
             // for each existing pool
@@ -134,6 +163,7 @@ class GlobalBook {
             name: _name,
             chainId: _newChainId,
             router,
+            vault,
             bridge,
             lzEndpoint,
             poolInfos,
@@ -147,17 +177,34 @@ class GlobalBook {
         return stargateEndpoint
     }
 
-    async provisionLiquidity(_signer, _chainId, _poolId, _amountRaw) {
+    async provisionLiquidity(_signer, _chainId, _poolId, _tokenAddr, _amountRaw) {
         const amount = this.amountToPoolLD(_amountRaw, _chainId, _poolId)
         const stargateEndpoint = this.stargateEndpoints[_chainId]
         const { chainPaths, lpProviders } = stargateEndpoint.poolInfos[_poolId]
-        await stargateEndpoint.router.connect(_signer).addBalancerLiquidity(_poolId, amount, _signer.address)
+        await stargateEndpoint.router.connect(_signer).addBalancerLiquidity(
+            _poolId, 
+            {
+                assets: [
+                    _tokenAddr
+                ],
+                maxAmountsIn: [
+                    amount
+                ],
+                userData: WeightedPoolEncoder.exitExactBPTInForTokensOut(
+                    0
+                ),
+                fromInternalBalance: false
+            }
+        )
+
         for (const [dstChainId, dstPoolId] of chainPaths) {
             await stargateEndpoint.router.connect(_signer).sendCredits(dstChainId, _poolId, dstPoolId, _signer.address)
         }
+
         if (!(_signer.address in lpProviders)) {
             this.stargateEndpoints[_chainId].poolInfos[_poolId].lpProviders[_signer.address] = _signer
         }
+        
         await this.audit()
     }
 
