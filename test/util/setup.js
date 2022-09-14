@@ -1,4 +1,4 @@
-const { deployNew, getAddr } = require("./helpers")
+const { deployNew, getAddr, sortArr } = require("./helpers")
 const { CHAIN_ID_TO_NAME, POOL_ID_TO_NAME } = require("./constants")
 
 // const { MONTH} = require('@balancer-labs/v2-helpers/src/time')
@@ -63,7 +63,7 @@ generateConfig = (numOfChains, numOfTokens, random) => {
 }
 
 deployStargateEndpoint = async (endpoint) => {
-    let owner = await getAddr(ethers)
+    const { owner } = await getAddr(ethers)
 
     const lzEndpoint = await deployNew("LZEndpointMock", [endpoint.chainId])
 
@@ -80,7 +80,7 @@ deployStargateEndpoint = async (endpoint) => {
     await factory.setDefaultFeeLibrary(feeLibrary.address)
     await router.setBridgeAndFactory(bridge.address, factory.address)
 
-    return { factory, router, bridge, lzEndpoint, feeLibrary, ...endpoint }
+    return { factory, router, vault, bridge, lzEndpoint, feeLibrary, ...endpoint }
 }
 
 bridgeEndpoints = async (endpoints) => {
@@ -101,6 +101,7 @@ deployPoolsOnChains = async (endpoints) => {
                         ...pool,
                         lzEndpoint: endpoint.lzEndpoint,
                         router: endpoint.router,
+                        vault: endpoint.vault,
                         bridge: endpoint.bridge,
                         dstChainWeights: pool.dstChainWeights,
                         ...(await deployPool(endpoint, pool.name, pool.ld, pool.sd, pool.id)),
@@ -117,12 +118,27 @@ deployPool = async (sgEndpoint, name, ld, sd, id) => {
     let tokenName = `${name}-${sgEndpoint.name}`
     const token = await deployNew("MockToken", [tokenName, tokenName, ld])
 
-    await sgEndpoint.router.createPool(id, token.address, sd, ld, "x", "x*")
+    tokenName = `${name}1-${sgEndpoint.name}`
+    const token1 = await deployNew("MockToken", [tokenName, tokenName, ld])
+
+    await sgEndpoint.router.createBalancerPool(
+        id, 
+        "x", 
+        "x*",
+        sortArr(token.address, token1.address),
+        [
+            ethers.utils.parseEther("0.5"),
+            ethers.utils.parseEther("0.5")
+        ],
+        sortArr(token.address, token1.address),
+        ethers.utils.parseEther("0.001")
+    )
+    
     let poolAddress = await sgEndpoint.factory.getPool(id)
     const Pool = await ethers.getContractFactory("Pool")
     let pool = await Pool.attach(poolAddress)
 
-    return { token, pool, name: tokenName, id, ld, sd, chainPaths: {} }
+    return { token, token1, pool, name: tokenName, id, ld, sd, chainPaths: {} }
 }
 
 createChainPaths = async (endpoints) => {
