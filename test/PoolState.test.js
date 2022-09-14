@@ -27,7 +27,7 @@ const { addBalancerLiquidity, equalize, mintAndSwap, removeLiquidityLocal, remov
 const { audit, getPoolState } = require("./util/poolStateHelpers")
 const { WeightedPoolEncoder } = require("@balancer-labs/balancer-js");
 
-describe.only("Pool State: ", function () {
+describe("Pool State: ", function () {
     this.timeout(600000000)
     let eth_endpoint, avax_endpoint, endpoints, tokens, pools
     let eth_usdc_pool, eth_dai_pool, avax_usdc_pool, avax_dai_pool

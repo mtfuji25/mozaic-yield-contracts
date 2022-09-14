@@ -77,7 +77,6 @@
     "@balancer-labs/v2-pool-weighted": "https://github.com/Mozaic-fi/balancer-pool-weighted",
     "@balancer-labs/v2-solidity-utils": "https://github.com/Mozaic-fi/balancer-solidity-utils",
     "@balancer-labs/v2-vault": "https://github.com/Mozaic-fi/balancer-vault",
-    "@balancer-labs/balancer-js": "https://github.com/Mozaic-fi/balancer-js",
     "@layerzerolabs/lz-sdk": "^0.0.2",
     "@layerzerolabs/sg-sdk": "^0.0.7",
     "@primitivefi/hardhat-dodoc": "^0.1.3",
