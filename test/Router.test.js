@@ -106,6 +106,17 @@ describe("Router", function () {
         await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [ethers.utils.parseEther("0.4"), ethers.utils.parseEther("0.6")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#200")
     })
 
+    // -----  create balancer pool ----- //
+    it("createBalancerPool() - reverts when swapFeePercentage is out of range", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 200)).to.be.revertedWith("BAL#203")
+    })
+
+    it("createBalancerPool() - reverts when there're less than 2 tokens", async function () {
+        weth = await deployNew("WETH9")
+        await expect(router.createBalancerPool(poolId, "pool", "BPS", [weth.address], [60, 40], [ZERO_ADDRESS, ZERO_ADDRESS], 1000000000000)).to.be.revertedWith("BAL#200")
+    })
+
     it("createBalancerPool() - reverts when token is 0x0", async function () {
         weth = await deployNew("WETH9")
         await expect(router.createBalancerPool(poolId, "pool", "BPS", [ZERO_ADDRESS, weth.address], [ethers.utils.parseEther("0.5"), ethers.utils.parseEther("0.5")], [ZERO_ADDRESS, fakeContract.address], ethers.utils.parseEther("0.001"))).to.be.revertedWith("BAL#309")
