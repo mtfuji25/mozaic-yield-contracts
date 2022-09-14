@@ -10,6 +10,10 @@ print = (a) => {
     if (process.env.VERBOSE === undefined || process.env.VERBOSE === "true") console.log(a)
 }
 
+sortArr = (addr1, addr2) => {
+    return addr1 > addr2 ? [addr2, addr1] : [addr1, addr2];
+}
+
 getAddr = async (ethers) => {
     const [owner, proxyOwner, bob, alice, user3, user4, badUser1, badUser2, fakeContract] = await ethers.getSigners()
     bob.name = "bob"
@@ -195,6 +199,7 @@ callAsContract = async (contract, impersonateAddr, funcNameAsStr, params = [], m
 }
 
 module.exports = {
+    sortArr,
     getAddr,
     callAsContract,
     checkBalance,

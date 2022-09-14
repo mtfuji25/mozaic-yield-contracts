@@ -18,7 +18,7 @@ import {IBaseWeightedPool} from "@balancer-labs/v2-pool-weighted/contracts/BaseW
 import {IPoolBalances} from "@balancer-labs/v2-vault/contracts/PoolBalances.sol";
 // import {IVault} from "@balancer-labs/v2-vault/contracts/interfaces/IVault.sol";
 import {IWeightedPoolFactory} from "@balancer-labs/v2-pool-weighted/contracts/WeightedPoolFactory.sol";
-import {IWeightedPool} from "@balancer-labs/v2-pool-weighted/contracts/WeightedPool.sol";
+import {WeightedPool, IWeightedPool} from "@balancer-labs/v2-pool-weighted/contracts/WeightedPool.sol";
 // import {IWETH} from "@balancer-labs/v2-solidity-utils/contracts/misc/IWETH.sol";
 import "./interfaces/IStargateRouter.sol";
 import "./interfaces/IStargateReceiver.sol";
@@ -626,6 +626,9 @@ contract Router is IStargateRouter, Ownable, ReentrancyGuard {
         uint8 sharedDecimals = 18; // All balancer pool token decimals are 18
         uint8 localDecimals = sharedDecimals;
         poolAddress = _createPool(_poolId, balancerPoolAddress, sharedDecimals, localDecimals, _name, _symbol);
+        WeightedPool pool = WeightedPool(balancerPoolAddress);
+        bytes32 balancerPoolId = pool.getPoolId();
+        balancerAndStargatePoolLookup[_poolId] = balancerPoolId;
     }
 
     function createChainPath(

@@ -3,6 +3,7 @@ const { ethers } = require("hardhat")
 const { BigNumber } = require("ethers")
 const { setup } = require("./util/setup")
 const {
+    sortArr,
     encodePackedParams,
     getAddr,
     deployNew,
@@ -24,9 +25,9 @@ const {
 } = require("./util/constants")
 const { addBalancerLiquidity, equalize, mintAndSwap, removeLiquidityLocal, removeLiquidityRemote, removeLiquidityInstant } = require("./util/actions")
 const { audit, getPoolState } = require("./util/poolStateHelpers")
-const {WeightedPoolEncoder} = require("@balancer-labs/balancer-js");
+const { WeightedPoolEncoder } = require("@balancer-labs/balancer-js");
 
-describe("Pool State: ", function () {
+describe.only("Pool State: ", function () {
     this.timeout(600000000)
     let eth_endpoint, avax_endpoint, endpoints, tokens, pools
     let eth_usdc_pool, eth_dai_pool, avax_usdc_pool, avax_dai_pool
@@ -40,6 +41,7 @@ describe("Pool State: ", function () {
         endpoints = await setup(2, 2)
         eth_endpoint = endpoints[ETHEREUM]
         avax_endpoint = endpoints[AVAX]
+
         ;({ [DAI]: eth_dai_pool, [USDC]: eth_usdc_pool } = eth_endpoint.pools)
         ;({ [DAI]: avax_dai_pool, [USDC]: avax_usdc_pool } = avax_endpoint.pools)
 
@@ -51,17 +53,17 @@ describe("Pool State: ", function () {
     })
 
     it("swap() - lzTxParams transfers extra gas", async function () {
-        await addBalancerLiquidity(avax_dai_pool, alice, BigNumber.from("1000"))
-        await equalize(endpoints, alice, false)
+        // await addBalancerLiquidity(avax_dai_pool, alice, BigNumber.from("1000"))
+        // await equalize(endpoints, alice, false)
 
-        const nativeAmt = 453
-        const encodedDstNativeAddr = encodePackedParams(["address"], [alice.address])
-        const lzTxParams = { dstGasForCall: 0, dstNativeAmount: nativeAmt, dstNativeAddr: encodedDstNativeAddr }
+        // const nativeAmt = 453
+        // const encodedDstNativeAddr = encodePackedParams(["address"], [alice.address])
+        // const lzTxParams = { dstGasForCall: 0, dstNativeAmount: nativeAmt, dstNativeAddr: encodedDstNativeAddr }
 
-        // mock is design to throw if this does not pass
-        await expect(mintAndSwap(eth_dai_pool, avax_dai_pool, bob, BigNumber.from("500"), lzTxParams)).to.be.revertedWith(
-            "NativeGasParams check"
-        )
+        // // mock is design to throw if this does not pass
+        // await expect(mintAndSwap(eth_dai_pool, avax_dai_pool, bob, BigNumber.from("500"), lzTxParams)).to.be.revertedWith(
+        //     "NativeGasParams check"
+        // )
     })
 
     it("swap() - reverts with 0 amount", async function () {

@@ -24,7 +24,7 @@ require("./tasks/getBridge");
 require("./tasks/mintTokens");
 require("./tasks/getPool");
 require("./tasks/addLPStakingPool");
-require("./tasks/createPools");
+require("./tasks/createBalancerPool");
 require("./tasks/createChainPaths");
 require("./tasks/activateChainPath");
 require("./tasks/activateChainPaths");

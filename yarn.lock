@@ -30,9 +30,26 @@
     chalk "^2.0.0"
     js-tokens "^4.0.0"
 
+"@balancer-labs/balancer-js@https://github.com/Mozaic-fi/balancer-js":
+  version "1.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-js#cd67ef518e486482ddc28f851081dec7cc3aed46"
+  dependencies:
+    "@balancer-labs/typechain" "https://github.com/Mozaic-fi/balancer-typechain"
+    "@ethersproject/abi" "^5.4.0"
+    "@ethersproject/abstract-signer" "^5.4.0"
+    "@ethersproject/address" "^5.4.0"
+    "@ethersproject/bignumber" "^5.4.0"
+    "@ethersproject/bytes" "^5.4.0"
+    "@ethersproject/constants" "^5.4.0"
+    "@ethersproject/contracts" "^5.4.0"
+
+"@balancer-labs/typechain@https://github.com/Mozaic-fi/balancer-typechain":
+  version "1.0.0"
+  resolved "https://github.com/Mozaic-fi/balancer-typechain#cf6c252b7e29281a5de5e843d3c73993442d8bdf"
+
 "@balancer-labs/v2-asset-manager-utils@https://github.com/Mozaic-fi/balancer-asset-manager-utils":
   version "0.2.0"
-  resolved "https://github.com/Mozaic-fi/balancer-asset-manager-utils#f6609a063aa3a211a8f7996910a301d9d2608401"
+  resolved "https://github.com/Mozaic-fi/balancer-asset-manager-utils#6408c47800f26467b1de5515ae6461495576227c"
   dependencies:
     "@balancer-labs/v2-solidity-utils" "https://github.com/Mozaic-fi/balancer-solidity-utils"
     "@balancer-labs/v2-vault" "https://github.com/Mozaic-fi/balancer-vault"
